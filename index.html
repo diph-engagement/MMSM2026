@@ -262,6 +262,8 @@
 
   .filter-row{ display:flex; gap:8px; margin-bottom:14px; }
   .filter-row button{ flex:1; padding:9px; border-radius:8px; border:1.5px solid #e2e2e2; background:#fff; font-size:12px; font-weight:700; cursor:pointer; color:#666; }
+  .compact-filter-row{ gap:6px; }
+  .compact-filter-row button{ flex:0 1 auto; padding:9px 14px; }
   .filter-row button.active{ background:var(--ink); border-color:var(--ink); color:#fff; }
 </style>
 </head>
@@ -713,24 +715,29 @@
         <label style="margin-top:0;">Announcement header</label>
         <input type="text" id="lbHeaderInput" value="Official Standings">
 
-        <label>Standings as of</label>
-        <div class="filter-row">
+        <label>Standings as of / Team count</label>
+        <div class="filter-row compact-filter-row" style="flex-wrap:wrap;">
           <button class="lbCheckpointBtn active" data-checkpoint="live" data-label="Official Standings">Live</button>
           <button class="lbCheckpointBtn" data-checkpoint="2026-08-20" data-label="Day 20 Checkpoint">Day 20</button>
           <button class="lbCheckpointBtn" data-checkpoint="2026-09-09" data-label="Day 40 Checkpoint">Day 40</button>
           <button class="lbCheckpointBtn" data-checkpoint="2026-09-29" data-label="Final Tally">Final</button>
-        </div>
-
-        <div class="filter-row" style="margin-top:12px;">
+          <div style="width:1px;align-self:stretch;background:#e2e2e2;flex:0 0 auto;"></div>
           <button class="lbFilterBtn active" data-filter="all">All Teams</button>
           <button class="lbFilterBtn" data-filter="10">Top 10</button>
           <button class="lbFilterBtn" data-filter="20">Top 20</button>
         </div>
 
         <div class="team-action-row" style="margin-top:14px;flex-wrap:wrap;">
-          <button type="button" class="primary" id="lbCopyImgBtn" style="flex:2;width:auto;margin-top:0;">🖼️ Copy Image</button>
-          <button type="button" class="secondary" id="lbDownloadImgBtn" style="flex:1;width:auto;margin-top:0;">⬇ Download</button>
-          <button type="button" class="secondary" id="lbCopyBtn" style="flex:1;width:auto;margin-top:0;">📋 Text</button>
+          <button type="button" class="primary" id="lbCopyImgBtn" style="flex:2;width:auto;margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            Copy Image
+          </button>
+          <button type="button" class="icon-action-btn info" id="lbDownloadImgBtn" title="Download Image" aria-label="Download Image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          </button>
+          <button type="button" class="icon-action-btn neutral" id="lbCopyBtn" title="Copy as Text" aria-label="Copy as Text">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-3"/><path d="M9 12h6M9 16h6"/></svg>
+          </button>
         </div>
         <div id="lbCopyMsg" class="msg"></div>
         <canvas id="lbCanvas" style="display:none;"></canvas>
@@ -1980,12 +1987,17 @@ async function loadSpecialActivities() {
           </div>
           <div class="roster">Applies to: ${t.appliesTo}${t.expirationDate ? ' · Expires ' + t.expirationDate + (expired ? ' (expired)' : '') : ' · No expiration'}</div>
           <div class="team-action-row" style="margin-top:8px;">
-            <button type="button" class="secondary" style="flex:1;width:auto;margin-top:0;" onclick="toggleTagActive('${t.tagId}', ${!t.active}, this)">
-              ${t.active ? 'Deactivate' : 'Activate'}
+            <button type="button" class="icon-action-btn ${t.active ? 'decline' : 'approve'}"
+              title="${t.active ? 'Deactivate this tag' : 'Activate this tag'}" aria-label="${t.active ? 'Deactivate' : 'Activate'}"
+              onclick="toggleTagActive('${t.tagId}', ${!t.active}, this)">
+              ${t.active
+                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M8 8l8 8"/></svg>'
+                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>'}
             </button>
-            <button type="button" class="icon-btn" title="Delete this tag" aria-label="Delete tag" onclick="deleteTag('${t.tagId}', this)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+            <button type="button" class="icon-action-btn info" title="Delete this tag" aria-label="Delete tag" onclick="deleteTag('${t.tagId}', this)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
             </button>
+            <span class="hint" style="margin:0;">${t.active ? 'Deactivate' : 'Activate'} / Delete</span>
           </div>
           <div class="hint" style="margin-top:6px;">${t.active && !expired ? '✓ Currently live in the entry form' : 'Not currently shown to participants'}</div>
         </div>
