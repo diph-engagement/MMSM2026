@@ -151,13 +151,21 @@
   }
   .member-row-btn:active{ background:var(--grey-light); }
   .member-entries-panel{ background:var(--grey-light); border-radius:10px; padding:6px 10px; margin:4px 0 8px; }
-  .entry-mini-row{ padding:10px 2px; border-bottom:1px solid #e6e6e6; font-size:12px; }
+  .entry-mini-row{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:11px 4px; border-bottom:1px solid #e6e6e6; font-size:12px; cursor:pointer;
+  }
   .entry-mini-row:last-child{ border-bottom:none; }
-  .emr-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .entry-mini-row:active{ background:var(--grey-light); }
+  .entry-mini-left{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .entry-mini-type{ font-weight:700; font-size:13px; color:var(--ink); }
+  .entry-mini-date{ color:#999; font-size:11px; margin-left:6px; }
+  .entry-mini-right{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
   .entry-mini-points{ font-weight:700; color:var(--orange-deep); font-size:13px; white-space:nowrap; }
-  .emr-bottom{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:4px; }
-  .entry-mini-date{ color:#999; font-size:11px; }
+  .status-dot{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .status-dot.approved{ background:#e3f8e9; color:#1a7a3d; }
+  .status-dot.pending{ background:#fff3cd; color:#8a6d00; }
+  .status-dot.declined{ background:#f0f0f0; color:#888; }
 
   .lb-row{ display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid #eee; }
   .lb-row:last-child{ border-bottom:none; }
@@ -625,6 +633,14 @@
   </div>
 </div>
 
+<div id="infoModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,0,31,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:22px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);">
+    <h3 id="infoModalTitle" style="font-size:16px;margin:0 0 14px;color:var(--ink);"></h3>
+    <div id="infoModalBody" style="font-size:13px;color:#444;line-height:1.6;"></div>
+    <button type="button" id="infoModalCloseBtn" style="width:100%;margin-top:18px;padding:12px;border-radius:10px;border:none;background:var(--purple);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Close</button>
+  </div>
+</div>
+
 <script>
 // ============ CONFIG ============
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzhpsSllV_a0N_mHP-LI4z-auh3N4oHknmEsGwzkhSDMiBAReMqN6NTtIWXN3AVszR/exec";
@@ -702,6 +718,18 @@ function customConfirm(message) {
     cancelBtn.addEventListener('click', onCancel);
     overlay.addEventListener('click', onOverlayClick);
   });
+}
+
+// ============ INFO MODAL (entry details, etc.) ============
+function showInfoModal(title, bodyHtml) {
+  document.getElementById('infoModalTitle').textContent = title;
+  document.getElementById('infoModalBody').innerHTML = bodyHtml;
+  const overlay = document.getElementById('infoModalOverlay');
+  overlay.style.display = 'flex';
+
+  function close() { overlay.style.display = 'none'; }
+  document.getElementById('infoModalCloseBtn').onclick = close;
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
 }
 
 // ============ ROUTER ============
@@ -1270,12 +1298,49 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
 });
 
 const memberEntriesCache = {};
+function renderMemberEntryRows(safeId, entries) {
+  const dotClassFor = s => s === 'Confirmed' ? 'approved' : s === 'Not Counted' ? 'declined' : 'pending';
+  const dotIconFor = s => s === 'Confirmed'
+    ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg>'
+    : s === 'Not Counted'
+    ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+    : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+  return entries.map((e, i) => `
+    <div class="entry-mini-row" onclick="showEntryDetail('${safeId}', ${i})">
+      <div class="entry-mini-left">
+        <span class="entry-mini-type">${e.activityType}</span><span class="entry-mini-date">${e.date}</span>
+      </div>
+      <div class="entry-mini-right">
+        <span class="entry-mini-points">${e.points} pts</span>
+        <span class="status-dot ${dotClassFor(e.status)}">${dotIconFor(e.status)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showEntryDetail(safeId, index) {
+  const e = memberEntriesCache[safeId][index];
+  const statusColor = e.status === 'Confirmed' ? '#1a7a3d' : e.status === 'Not Counted' ? '#a4292f' : '#8a6d00';
+  let body = `
+    <div style="margin-bottom:10px;"><strong>Activity:</strong> ${e.activityType}</div>
+    <div style="margin-bottom:10px;"><strong>Date:</strong> ${e.date}</div>
+    <div style="margin-bottom:10px;"><strong>Points:</strong> <span style="color:var(--orange-deep);font-weight:700;">${e.points} pts</span></div>
+    <div style="margin-bottom:10px;"><strong>Status:</strong> <span style="color:${statusColor};font-weight:700;">${e.status}</span></div>
+  `;
+  if (e.adminNotes && e.adminNotes.length) {
+    body += e.adminNotes.map(n => `<div class="admin-note-card" style="margin-top:8px;">${n}</div>`).join('');
+  }
+  showInfoModal('Activity Details', body);
+}
+
 async function toggleMemberEntries(safeId, stravaName) {
   const panel = document.getElementById('memberEntries-' + safeId);
   if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
 
   if (memberEntriesCache[safeId]) {
-    panel.innerHTML = memberEntriesCache[safeId];
+    panel.innerHTML = memberEntriesCache[safeId].length === 0
+      ? '<p class="hint" style="margin:8px 0;">No activities logged yet.</p>'
+      : renderMemberEntryRows(safeId, memberEntriesCache[safeId]);
     panel.style.display = 'block';
     return;
   }
@@ -1289,31 +1354,12 @@ async function toggleMemberEntries(safeId, stravaName) {
       panel.innerHTML = '<p class="hint" style="margin:8px 0;color:#a4292f;">' + (data.error || 'Could not load entries.') + '</p>';
       return;
     }
+    memberEntriesCache[safeId] = data.entries;
     if (data.entries.length === 0) {
       panel.innerHTML = '<p class="hint" style="margin:8px 0;">No activities logged yet.</p>';
       return;
     }
-    const badgeClassFor = s => s === 'Confirmed' ? 'approved' : s === 'Not Counted' ? 'declined' : 'pending';
-    const badgeIconFor = s => s === 'Confirmed'
-      ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" style="vertical-align:-1px;margin-right:3px;"><path d="M20 6L9 17l-5-5"/></svg>'
-      : s === 'Not Counted'
-      ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" style="vertical-align:-1px;margin-right:3px;"><path d="M18 6L6 18M6 6l12 12"/></svg>'
-      : '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
-    const html = data.entries.map(e => `
-      <div class="entry-mini-row">
-        <div class="emr-top">
-          <span class="entry-mini-type">${e.activityType}</span>
-          <span class="entry-mini-points">${e.points} pts</span>
-        </div>
-        <div class="emr-bottom">
-          <span class="entry-mini-date">${e.date}</span>
-          <span class="badge ${badgeClassFor(e.status)}">${badgeIconFor(e.status)}${e.status}</span>
-        </div>
-        ${(e.adminNotes && e.adminNotes.length) ? e.adminNotes.map(n => `<div class="admin-note-card">${n}</div>`).join('') : ''}
-      </div>
-    `).join('');
-    memberEntriesCache[safeId] = html;
-    panel.innerHTML = html;
+    panel.innerHTML = renderMemberEntryRows(safeId, data.entries);
   } catch (err) {
     panel.innerHTML = '<p class="hint" style="margin:8px 0;color:#a4292f;">Could not reach the server.</p>';
   }
