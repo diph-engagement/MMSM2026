@@ -106,6 +106,19 @@
   .member-block{ background:var(--grey-light); border-radius:12px; padding:14px 16px 6px; margin-top:10px; }
   .member-block .member-title{ font-weight:700; font-size:13px; color:var(--purple-deep); }
   .hint{ font-size:12px; color:var(--grey-mid); margin-top:4px; }
+
+  .file-upload-box{
+    display:block; border:2px dashed #d5d0e8; border-radius:12px; padding:18px 12px;
+    text-align:center; cursor:pointer; background:var(--grey-light); margin-top:5px;
+    transition:border-color .15s, background .15s;
+  }
+  .file-upload-box:active{ border-color:var(--purple); background:#f7f5fc; }
+  .file-upload-box.has-file{ border-color:#1a7a3d; border-style:solid; background:#f0faf3; }
+  .file-upload-box .upload-icon{ color:var(--purple); }
+  .file-upload-box.has-file .upload-icon{ color:#1a7a3d; }
+  .file-upload-box .upload-text{ font-size:12px; font-weight:700; color:var(--ink); margin-top:6px; word-break:break-word; }
+  .file-upload-box .upload-subtext{ font-size:10px; color:#999; margin-top:2px; }
+  .file-upload-box input[type="file"]{ display:none; }
   .checkline{ display:flex; align-items:flex-start; gap:8px; font-size:13px; color:#444; line-height:1.4; margin-top:14px; }
   .checkline input{ width:auto; margin-top:3px; flex-shrink:0; }
 
@@ -132,6 +145,11 @@
     font-weight:700; font-size:13px; cursor:pointer; color:#666; font-family:inherit;
   }
   .toggle-tabs button.active{ background:var(--purple); border-color:var(--purple); color:#fff; }
+  .tab-count{
+    display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px;
+    padding:0 5px; border-radius:10px; background:var(--orange); color:#fff; font-size:10px; font-weight:800; margin-left:4px;
+  }
+  .adminTabBtn.active .tab-count{ background:#fff; color:var(--purple); }
 
   .view{ display:none; }
   .view.active{ display:block; }
@@ -150,7 +168,7 @@
     cursor:pointer; text-align:left; color:var(--ink);
   }
   .member-row-btn:active{ background:var(--grey-light); }
-  .member-entries-panel{ background:var(--grey-light); border-radius:10px; padding:6px 10px; margin:4px 0 8px; }
+  .member-entries-panel{ background:var(--grey-light); border-radius:10px; padding:6px 10px; margin:4px 0 8px; max-height:340px; overflow-y:auto; }
   .entry-mini-row{
     display:flex; justify-content:space-between; align-items:center; gap:10px;
     padding:11px 4px; border-bottom:1px solid #e6e6e6; font-size:12px; cursor:pointer;
@@ -207,6 +225,7 @@
   .badge.declined{ background:#f0f0f0; color:#888; }
   .entry-card .links{ font-size:12px; margin:8px 0; }
   .entry-card .links a{ color:var(--orange-deep); margin-right:10px; }
+  .comment-toggle-link{ display:inline-block; font-size:11px; color:var(--purple); font-weight:600; margin:6px 0 4px; cursor:pointer; }
   .entry-actions{ display:flex; gap:8px; margin-top:10px; align-items:center; }
   .icon-action-btn{
     width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; flex-shrink:0;
@@ -442,10 +461,24 @@
           <label>Strava Activity Link (covers full session, bench time OK)</label>
           <input type="url" id="stravaLinkB" placeholder="https://www.strava.com/activities/...">
           <div class="row2">
-            <div><label>Start Photo/Video</label><input type="file" id="proofPhoto1" accept="image/*,video/*" capture="environment"></div>
-            <div><label>End Photo/Video</label><input type="file" id="proofPhoto2" accept="image/*,video/*" capture="environment"></div>
+            <div>
+              <label>Start Photo</label>
+              <label class="file-upload-box" for="proofPhoto1" data-default-text="Tap to add photo">
+                <svg class="upload-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                <div class="upload-text">Tap to add photo</div>
+                <input type="file" id="proofPhoto1" accept="image/*" capture="environment" onchange="updateFileUploadBox(this)">
+              </label>
+            </div>
+            <div>
+              <label>End Photo</label>
+              <label class="file-upload-box" for="proofPhoto2" data-default-text="Tap to add photo">
+                <svg class="upload-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                <div class="upload-text">Tap to add photo</div>
+                <input type="file" id="proofPhoto2" accept="image/*" capture="environment" onchange="updateFileUploadBox(this)">
+              </label>
+            </div>
           </div>
-          <p class="hint">Take or pick the photo right here — no need to upload anywhere else first.</p>
+          <p class="hint">Photos only (max 8MB each) — no need to upload anywhere else first.</p>
           <label class="checkline">
             <input type="checkbox" id="tlConfirmed">
             My Team Leader has confirmed I was actively playing for at least half the game.
@@ -514,8 +547,9 @@
   <div id="adminPanel" style="display:none;">
     <div class="toggle-tabs">
       <button type="button" class="adminTabBtn active" data-tab="controls">Controls</button>
-      <button type="button" class="adminTabBtn" data-tab="queue">Review Queue</button>
+      <button type="button" class="adminTabBtn" data-tab="queue">Review Queue <span id="queueTabCount" class="tab-count" style="display:none;"></span></button>
       <button type="button" class="adminTabBtn" data-tab="teams">Teams</button>
+      <button type="button" class="adminTabBtn" data-tab="violations">Violations <span id="violationsTabCount" class="tab-count" style="display:none;"></span></button>
       <button type="button" class="adminTabBtn" data-tab="leaderboard">Leaderboard</button>
     </div>
 
@@ -547,7 +581,7 @@
 
       <div class="section-label">Weekly Minimum Penalty</div>
       <div class="card">
-        <p class="hint" style="margin-top:0;">Runs automatically every Monday morning, checking the week that just closed: any team with an active member who logged fewer than 2 activities gets a flat -20 point deduction (Section 7.1). Idempotent — running it again for a week already checked does nothing.</p>
+        <p class="hint" style="margin-top:0;">Runs automatically every Monday morning, checking the week that just closed. Any team with an active member who logged fewer than 2 activities gets a -20 point deduction <strong>held pending your approval</strong> in the Review Queue (Section 7.1) — it won't count, and the team won't be notified, until you approve it there. Idempotent — running it again for a week already checked does nothing.</p>
         <button type="button" class="secondary" id="runWeeklyPenaltyBtn">Run Check Now (for testing)</button>
         <div id="weeklyPenaltyMsg" class="msg"></div>
       </div>
@@ -574,7 +608,11 @@
       <div class="card">
         <p class="hint" style="margin-top:0;">This is the document teams must download before registering.</p>
         <p id="currentPdfLabel" style="font-size:13px;font-weight:600;color:var(--ink);">No file uploaded yet.</p>
-        <input type="file" id="pdfFileInput" accept="application/pdf" style="margin-top:8px;">
+        <label class="file-upload-box" for="pdfFileInput" data-default-text="Tap to choose a PDF">
+          <svg class="upload-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          <div class="upload-text">Tap to choose a PDF</div>
+          <input type="file" id="pdfFileInput" accept="application/pdf" onchange="updateFileUploadBox(this)">
+        </label>
         <button type="button" class="primary" id="pdfUploadBtn">Upload PDF</button>
         <div id="pdfUploadMsg" class="msg"></div>
       </div>
@@ -585,6 +623,7 @@
         <button class="filterBtn active" data-filter="needs-review">Needs Review</button>
         <button class="filterBtn" data-filter="all">All Entries</button>
       </div>
+      <input type="text" id="queueSearchInput" placeholder="Search by team or name..." style="margin-bottom:14px;" oninput="renderQueue(document.querySelector('.filterBtn.active').dataset.filter)">
       <div id="queueList"></div>
       <div id="queueMsg" class="msg"></div>
     </div>
@@ -592,6 +631,13 @@
     <div id="adminTab-teams" class="subview">
       <div id="teamsList"></div>
       <div id="teamsMsg" class="msg"></div>
+    </div>
+
+    <div id="adminTab-violations" class="subview">
+      <p class="hint" style="margin-top:0;">Every violation logged this season, across all teams — read-only. Log new violations from the Teams tab.</p>
+      <input type="text" id="violationsSearchInput" placeholder="Search by team or name..." style="margin-bottom:14px;" oninput="renderViolationsList()">
+      <div id="violationsList"></div>
+      <div id="violationsMsg" class="msg"></div>
     </div>
 
     <div id="adminTab-leaderboard" class="subview">
@@ -1117,6 +1163,18 @@ document.getElementById('registerAnotherBtn').addEventListener('click', function
 });
 
 // ============ ENTRY SUBMISSION ============
+function updateFileUploadBox(input) {
+  const box = input.closest('.file-upload-box');
+  const textEl = box.querySelector('.upload-text');
+  if (input.files && input.files[0]) {
+    box.classList.add('has-file');
+    textEl.textContent = '✓ ' + input.files[0].name;
+  } else {
+    box.classList.remove('has-file');
+    textEl.textContent = box.dataset.defaultText || 'Tap to choose a file';
+  }
+}
+
 function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1221,7 +1279,11 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
     const photo1 = document.getElementById('proofPhoto1').files[0];
     const photo2 = document.getElementById('proofPhoto2').files[0];
     if (!photo1 || !photo2) {
-      msg.className = 'msg error'; msg.textContent = 'Add both a start and end photo/video before submitting.'; return;
+      msg.className = 'msg error'; msg.textContent = 'Add both a start and end photo before submitting.'; return;
+    }
+    const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+    if (photo1.size > MAX_PHOTO_BYTES || photo2.size > MAX_PHOTO_BYTES) {
+      msg.className = 'msg error'; msg.textContent = 'Each photo needs to be under 8MB — try a lower-resolution photo or screenshot.'; return;
     }
     payload.sport = document.getElementById('sport').value;
     payload.activityDate = document.getElementById('activityDateB').value;
@@ -1266,6 +1328,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
       document.getElementById('entryConfirmView').style.display = 'block';
       document.getElementById('entryConfirmView').scrollIntoView({ behavior: 'smooth', block: 'center' });
       document.getElementById('entryForm').reset();
+      document.querySelectorAll('#entryForm .file-upload-box input[type="file"]').forEach(updateFileUploadBox);
     } else {
       msg.className = 'msg error';
       msg.textContent = data.error || 'Something went wrong — please try again.';
@@ -1329,7 +1392,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
       const safeId = m.strava.replace(/[^a-zA-Z0-9]/g, '');
       return `
         <button type="button" class="member-row-btn" onclick="toggleMemberEntries('${safeId}', '${m.strava.replace(/'/g, "\\'")}')">
-          <span>${m.name} <span style="color:#999;">(${m.strava})</span></span>
+          <span>${m.name} <span style="color:#999;">(${m.strava})</span>${m.strikes > 0 ? ` <span style="color:#a4292f;font-weight:700;font-size:11px;">(${m.strikes} strike${m.strikes > 1 ? 's' : ''})</span>` : ''}</span>
           <span style="font-weight:700;color:var(--orange-deep);">${pts} pts ▾</span>
         </button>
         <div id="memberEntries-${safeId}" class="member-entries-panel" style="display:none;"></div>
@@ -1346,6 +1409,34 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
 });
 
 const memberEntriesCache = {};
+function getWeekLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return 'Unknown week';
+  const day = d.getDay();
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = dt => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return monday.getTime() + '|Week of ' + fmt(monday) + '–' + fmt(sunday);
+}
+
+function getCheckpointLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return '0|Unknown period';
+  // Reuses the exact same dates as the home screen countdown, so the two never drift apart.
+  const day20 = new Date('2026-08-20T23:59:59+08:00');
+  const day40 = new Date('2026-09-09T23:59:59+08:00');
+  const day60 = new Date('2026-09-29T23:59:59+08:00');
+  if (d <= day20) return '1|Toward Day 20 Checkpoint (through Aug 20)';
+  if (d <= day40) return '2|Toward Day 40 Checkpoint (Aug 21–Sep 9)';
+  if (d <= day60) return '3|Toward Final Tally (Sep 10–29)';
+  return '4|After Final Tally';
+}
+
+const memberGroupMode = {}; // safeId -> 'week' | 'checkpoint', remembers each panel's choice
+
 function renderMemberEntryRows(safeId, entries) {
   const dotClassFor = s => s === 'Confirmed' ? 'approved' : s === 'Not Counted' ? 'declined' : 'pending';
   const dotIconFor = s => s === 'Confirmed'
@@ -1353,8 +1444,9 @@ function renderMemberEntryRows(safeId, entries) {
     : s === 'Not Counted'
     ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M18 6L6 18M6 6l12 12"/></svg>'
     : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
-  return entries.map((e, i) => `
-    <div class="entry-mini-row" onclick="showEntryDetail('${safeId}', ${i})">
+
+  const rowHtml = (e, index) => `
+    <div class="entry-mini-row" onclick="showEntryDetail('${safeId}', ${index})">
       <div class="entry-mini-left">
         <span class="entry-mini-type">${e.activityType}</span><span class="entry-mini-date">${e.date}</span>
       </div>
@@ -1363,7 +1455,51 @@ function renderMemberEntryRows(safeId, entries) {
         <span class="status-dot ${dotClassFor(e.status)}">${dotIconFor(e.status)}</span>
       </div>
     </div>
-  `).join('');
+  `;
+
+  if (entries.length <= 8) {
+    // Small lists don't need grouping — just show them flat.
+    return entries.map((e, i) => rowHtml(e, i)).join('');
+  }
+
+  const mode = memberGroupMode[safeId] || 'week';
+  const labelFn = mode === 'checkpoint' ? getCheckpointLabel : getWeekLabel;
+
+  const groups = {};
+  const order = [];
+  entries.forEach((e, i) => {
+    const [sortKey, label] = labelFn(e.date).split('|');
+    if (!groups[sortKey]) { groups[sortKey] = { label, items: [] }; order.push(sortKey); }
+    groups[sortKey].items.push({ ...e, _index: i });
+  });
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px;margin-bottom:4px;">
+      <span style="font-size:10px;color:#999;font-weight:700;text-transform:uppercase;">${entries.length} activities · newest first</span>
+      <span style="display:flex;gap:4px;">
+        <button type="button" onclick="setMemberGroupMode('${safeId}','week')" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;border:1px solid ${mode === 'week' ? 'var(--purple)' : '#e2e2e2'};background:${mode === 'week' ? 'var(--purple)' : '#fff'};color:${mode === 'week' ? '#fff' : '#777'};cursor:pointer;">Week</button>
+        <button type="button" onclick="setMemberGroupMode('${safeId}','checkpoint')" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;border:1px solid ${mode === 'checkpoint' ? 'var(--purple)' : '#e2e2e2'};background:${mode === 'checkpoint' ? 'var(--purple)' : '#fff'};color:${mode === 'checkpoint' ? '#fff' : '#777'};cursor:pointer;">Checkpoint</button>
+      </span>
+    </div>
+  `;
+  order.forEach(key => {
+    const group = groups[key];
+    const groupPoints = group.items.reduce((sum, e) => sum + (Number(e.points) || 0), 0);
+    html += `
+      <div style="display:flex;justify-content:space-between;align-items:center;background:#eee7fb;border-radius:6px;padding:6px 8px;margin:8px 0 4px;">
+        <span style="font-size:11px;font-weight:700;color:var(--purple-deep);">${group.label}</span>
+        <span style="font-size:11px;color:#666;">${group.items.length} ${group.items.length === 1 ? 'activity' : 'activities'} · ${groupPoints.toFixed(2).replace(/\.?0+$/, '')} pts</span>
+      </div>
+    `;
+    html += group.items.map(e => rowHtml(e, e._index)).join('');
+  });
+  return html;
+}
+
+function setMemberGroupMode(safeId, mode) {
+  memberGroupMode[safeId] = mode;
+  const panel = document.getElementById('memberEntries-' + safeId);
+  panel.innerHTML = renderMemberEntryRows(safeId, memberEntriesCache[safeId]);
 }
 
 function showEntryDetail(safeId, index) {
@@ -1498,6 +1634,7 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     loadQueue('needs-review');
     loadTeams();
     loadAdminLeaderboard();
+    loadViolations();
   } catch (err) {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
@@ -1580,7 +1717,7 @@ document.getElementById('regCloseSaveBtn').addEventListener('click', async funct
 document.getElementById('runWeeklyPenaltyBtn').addEventListener('click', async function(){
   const msg = document.getElementById('weeklyPenaltyMsg');
   msg.style.display = 'none';
-  if (!(await customConfirm('This will check last week\'s activity and apply -20 point penalties to any team that fell short. Continue?'))) return;
+  if (!(await customConfirm('This will check last week\'s activity and flag any team that fell short for a -20 point deduction, held pending your approval in the Review Queue. Continue?'))) return;
 
   this.disabled = true; this.textContent = 'Running…';
   try {
@@ -1685,6 +1822,7 @@ document.getElementById('pdfUploadBtn').addEventListener('click', function(){
         msg.className = 'msg success'; msg.textContent = 'Uploaded — teams will now see this on the registration gate.';
         updatePdfLabel(data.fileName, data.url);
         fileInput.value = '';
+        updateFileUploadBox(fileInput);
       } else {
         msg.className = 'msg error'; msg.textContent = data.error || 'Upload failed.';
       }
@@ -1706,6 +1844,70 @@ document.querySelectorAll('.filterBtn').forEach(btn => {
   });
 });
 
+function updateQueueTabCount() {
+  const count = allEntriesCache.filter(e =>
+    String(e.status).indexOf('Pending') === 0 || String(e.status).indexOf('Flagged') === 0
+  ).length;
+  const badge = document.getElementById('queueTabCount');
+  if (count > 0) { badge.textContent = count; badge.style.display = 'inline-flex'; }
+  else { badge.style.display = 'none'; }
+}
+
+let allViolationsCache = [];
+
+async function loadViolations() {
+  const list = document.getElementById('violationsList');
+  const msg = document.getElementById('violationsMsg');
+  list.innerHTML = '<p class="hint">Loading…</p>'; msg.style.display = 'none';
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=admin_violations&adminKey=' + encodeURIComponent(adminKey));
+    const data = await res.json();
+    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    allViolationsCache = data.violations;
+    renderViolationsList();
+    updateViolationsTabCount();
+  } catch (err) {
+    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+  }
+}
+
+function updateViolationsTabCount() {
+  const oneDayAgo = new Date() - 86400000;
+  const recentCount = allViolationsCache.filter(v => new Date(v.timestamp) > oneDayAgo).length;
+  const badge = document.getElementById('violationsTabCount');
+  if (recentCount > 0) { badge.textContent = recentCount; badge.style.display = 'inline-flex'; }
+  else { badge.style.display = 'none'; }
+}
+
+function renderViolationsList() {
+  const list = document.getElementById('violationsList');
+  const searchTerm = document.getElementById('violationsSearchInput').value.trim().toLowerCase();
+  let items = allViolationsCache;
+  if (searchTerm) {
+    items = items.filter(v =>
+      v.teamName.toLowerCase().includes(searchTerm) || v.memberName.toLowerCase().includes(searchTerm)
+    );
+  }
+  if (items.length === 0) {
+    list.innerHTML = '<p class="hint">' + (searchTerm ? 'No matching violations.' : 'No violations logged yet.') + '</p>';
+    return;
+  }
+  const strikeColor = n => n >= 3 ? '#a4292f' : n === 2 ? '#c78a00' : '#666';
+  list.innerHTML = items.map(v => `
+    <div class="entry-card">
+      <div class="top-row">
+        <div>
+          <div class="team">${v.teamName} — ${v.memberName}</div>
+          <div class="meta">${new Date(v.timestamp).toLocaleDateString()} · Strike ${v.strikeNumber}</div>
+        </div>
+        <span class="badge" style="background:${strikeColor(v.strikeNumber)};color:#fff;">Strike ${v.strikeNumber}</span>
+      </div>
+      <div class="hint" style="margin-top:6px;"><strong>Reason:</strong> ${v.reason}</div>
+      <div class="hint" style="margin-top:2px;"><strong>Consequence:</strong> ${v.consequence}</div>
+    </div>
+  `).join('');
+}
+
 async function loadQueue(filter) {
   const list = document.getElementById('queueList');
   const msg = document.getElementById('queueMsg');
@@ -1716,6 +1918,7 @@ async function loadQueue(filter) {
     if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     allEntriesCache = data.entries;
     renderQueue(filter || 'needs-review');
+    updateQueueTabCount();
   } catch (err) {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
@@ -1736,12 +1939,23 @@ function renderQueue(filter) {
     items = items.filter(e => String(e.status).indexOf('Pending') === 0 || String(e.status).indexOf('Flagged') === 0);
     items.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // oldest first — needs attention soonest
   }
+  const searchTerm = (document.getElementById('queueSearchInput')?.value || '').trim().toLowerCase();
+  if (searchTerm) {
+    items = items.filter(e =>
+      e.teamName.toLowerCase().includes(searchTerm) || e.stravaName.toLowerCase().includes(searchTerm)
+    );
+  }
   if (items.length === 0) {
-    list.innerHTML = '<p class="hint">Nothing here right now.</p>';
+    list.innerHTML = '<p class="hint">' + (searchTerm ? 'No matching entries.' : 'Nothing here right now.') + '</p>';
     return;
   }
+  const RENDER_CAP = 150;
+  const totalMatching = items.length;
+  const capped = items.length > RENDER_CAP;
+  if (capped) items = items.slice(0, RENDER_CAP);
   const STATUS_OPTIONS = ['Auto-Logged', 'Approved', 'Declined', 'Pending Fair Play Spot-Check',
     'Pending Approval — Sport Not Pre-Approved', 'Pending Approval — Late Submission',
+    'Pending Approval — Weekly Minimum Penalty',
     'Flagged — Exceeds Daily Cap', 'Flagged — Unusually Fast Pace', 'Flagged — Duplicate Strava Link',
     'Rejected — Second Category B Session This Day', 'Rejected — Member Disqualified'];
 
@@ -1770,7 +1984,10 @@ function renderQueue(filter) {
           ${e.proofLink2 ? `<a href="${e.proofLink2}" target="_blank">End Proof</a>` : ''}
         </div>
         ${e.notes ? `<div class="hint">${e.notes}</div>` : ''}
-        ${canDecide ? `<textarea placeholder="Optional comment..." class="admin-comment"></textarea>` : ''}
+        ${canDecide ? `
+          <a href="javascript:void(0)" class="comment-toggle-link" onclick="this.style.display='none';this.nextElementSibling.style.display='block';">+ Add comment</a>
+          <textarea placeholder="Optional comment..." class="admin-comment" style="display:none;"></textarea>
+        ` : ''}
         <div class="entry-actions">
           ${canDecide ? `
             <button class="icon-action-btn approve" title="Approve this entry" aria-label="Approve" onclick="reviewEntry('${e.entryId}','approve',this)">
@@ -1799,6 +2016,9 @@ function renderQueue(filter) {
       </div>
     `;
   }).join('');
+  if (capped) {
+    list.innerHTML += `<p class="hint" style="text-align:center;padding:12px 0;">Showing the oldest ${RENDER_CAP} of ${totalMatching} matching entries — use search above to narrow this down further.</p>`;
+  }
 }
 
 async function reviewEntry(entryId, decision, btnEl) {
@@ -2010,6 +2230,7 @@ async function logViolation(teamName, safeId, btnEl) {
     if (data.success) {
       alert('Strike ' + data.strikeNumber + ' logged for ' + memberName + '.\n\n' + data.consequence);
       loadTeams();
+      loadViolations();
     } else {
       alert(data.error || 'Could not log this violation.');
       btnEl.disabled = false; btnEl.textContent = 'Log Violation';
