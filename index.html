@@ -1976,9 +1976,16 @@ async function loadSpecialActivities() {
     if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     if (data.tags.length === 0) { list.innerHTML = '<p class="hint">No special activities created yet.</p>'; return; }
     const today = new Date().toISOString().slice(0, 10);
+    const APPLIES_TO_OPTIONS = [
+      ['All', 'All entries'], ['Category A', 'Category A (any solo activity)'], ['Category B', 'Category B (any team sport)'],
+      ['Walking', 'Walking only'], ['Running', 'Running only'], ['Solo Cardio Workout', 'Solo Cardio Workout only'],
+      ['Basketball', 'Basketball only'], ['Volleyball', 'Volleyball only'], ['Badminton', 'Badminton only'],
+      ['Pickleball', 'Pickleball only'], ['Football', 'Football only'],
+    ];
     list.innerHTML = data.tags.map(t => {
       const expired = t.expirationDate && t.expirationDate < today;
       const boostLabel = t.boostType === 'Multiplier' ? t.boostValue + 'x points' : '+' + t.boostValue + ' pts';
+      const safeId = t.tagId.replace(/[^a-zA-Z0-9]/g, '');
       return `
         <div class="team-card">
           <div class="head">
@@ -1994,12 +2001,40 @@ async function loadSpecialActivities() {
                 ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M8 8l8 8"/></svg>'
                 : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>'}
             </button>
+            <button type="button" class="icon-action-btn neutral" title="Edit this tag" aria-label="Edit tag" onclick="toggleTagEditPanel('${safeId}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+            </button>
             <button type="button" class="icon-action-btn info" title="Delete this tag" aria-label="Delete tag" onclick="deleteTag('${t.tagId}', this)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
             </button>
-            <span class="hint" style="margin:0;">${t.active ? 'Deactivate' : 'Activate'} / Delete</span>
+            <span class="hint" style="margin:0;">${t.active ? 'Deactivate' : 'Activate'} / Edit / Delete</span>
           </div>
           <div class="hint" style="margin-top:6px;">${t.active && !expired ? '✓ Currently live in the entry form' : 'Not currently shown to participants'}</div>
+
+          <div id="tagEditPanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
+            <label style="margin-top:0;">Tag Name</label>
+            <input type="text" id="editTagName-${safeId}" value="${t.tagName.replace(/"/g, '&quot;')}">
+            <label>Applies To</label>
+            <select id="editTagAppliesTo-${safeId}">
+              ${APPLIES_TO_OPTIONS.map(([val, label]) => `<option value="${val}" ${val === t.appliesTo ? 'selected' : ''}>${label}</option>`).join('')}
+            </select>
+            <div class="row2">
+              <div>
+                <label>Boost Type</label>
+                <select id="editTagBoostType-${safeId}">
+                  <option value="Multiplier" ${t.boostType === 'Multiplier' ? 'selected' : ''}>Multiplier (e.g. 2x)</option>
+                  <option value="Flat Bonus" ${t.boostType === 'Flat Bonus' ? 'selected' : ''}>Flat Bonus (e.g. +20 pts)</option>
+                </select>
+              </div>
+              <div>
+                <label>Boost Value</label>
+                <input type="number" step="0.1" id="editTagBoostValue-${safeId}" value="${t.boostValue}">
+              </div>
+            </div>
+            <label>Expiration Date (optional)</label>
+            <input type="date" id="editTagExpiration-${safeId}" value="${t.expirationDate || ''}">
+            <button type="button" class="primary" style="margin-top:10px;" onclick="saveTagEdit('${t.tagId}','${safeId}',this)">Save Changes</button>
+          </div>
         </div>
       `;
     }).join('');
@@ -2020,6 +2055,37 @@ async function toggleTagActive(tagId, newActive, btnEl) {
     else { alert(data.error || 'Could not update this tag.'); btnEl.disabled = false; }
   } catch (err) {
     alert('Could not reach the server.'); btnEl.disabled = false;
+  }
+}
+
+function toggleTagEditPanel(safeId) {
+  const panel = document.getElementById('tagEditPanel-' + safeId);
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveTagEdit(tagId, safeId, btnEl) {
+  const tagName = document.getElementById('editTagName-' + safeId).value.trim();
+  const appliesTo = document.getElementById('editTagAppliesTo-' + safeId).value;
+  const boostType = document.getElementById('editTagBoostType-' + safeId).value;
+  const boostValue = document.getElementById('editTagBoostValue-' + safeId).value;
+  const expirationDate = document.getElementById('editTagExpiration-' + safeId).value;
+
+  if (!tagName || !boostValue) {
+    alert('Tag name and a boost value are both required.'); return;
+  }
+  if (!(await customConfirm('Save these changes? Entries already submitted keep whatever boost was in effect when they were logged — this only affects future submissions.'))) return;
+
+  btnEl.disabled = true; btnEl.textContent = 'Saving…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_update_special_activity', adminKey, tagId, tagName, appliesTo, boostType, boostValue, expirationDate }),
+    });
+    const data = await res.json();
+    if (data.success) { loadSpecialActivities(); }
+    else { alert(data.error || 'Could not save these changes.'); btnEl.disabled = false; btnEl.textContent = 'Save Changes'; }
+  } catch (err) {
+    alert('Could not reach the server.'); btnEl.disabled = false; btnEl.textContent = 'Save Changes';
   }
 }
 
@@ -2194,9 +2260,9 @@ function renderQueue(filter) {
             <div class="team">${e.teamName} — ${e.stravaName}${e.specialTag ? `<span title="Boosted by ${e.specialTag}">${starIcon}</span>` : ''}</div>
             <div class="meta">${e.category === 'A' ? e.activityType : e.sport || e.activityType} · ${e.activityDate} · ${e.distanceOrDuration || ''} · ${e.points} pts</div>
           </div>
-          <div style="text-align:right;">
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
             <span class="badge ${badgeClass(e.status)}">${e.status}</span>
-            ${canDecide ? `<div class="badge ${ageClass}" style="margin-top:6px;" title="${ageLabel}">${clockIcon}${daysOld <= 0 ? 'New' : daysOld + 'd'}</div>` : ''}
+            ${canDecide ? `<span class="badge ${ageClass}" title="${ageLabel}">${clockIcon}${daysOld <= 0 ? 'New' : daysOld + 'd'}</span>` : ''}
           </div>
         </div>
         <div class="links">
@@ -2205,10 +2271,6 @@ function renderQueue(filter) {
           ${e.proofLink2 ? `<a href="${e.proofLink2}" target="_blank">End Proof</a>` : ''}
         </div>
         ${e.notes ? `<div class="hint">${e.notes}</div>` : ''}
-        ${canDecide ? `
-          <a href="javascript:void(0)" class="comment-toggle-link" onclick="this.style.display='none';this.nextElementSibling.style.display='block';">+ Add comment</a>
-          <textarea placeholder="Optional comment..." class="admin-comment" style="display:none;"></textarea>
-        ` : ''}
         <div class="entry-actions">
           ${canDecide ? `
             <button class="icon-action-btn approve" title="Approve this entry" aria-label="Approve" onclick="reviewEntry('${e.entryId}','approve',this)">
@@ -2221,8 +2283,10 @@ function renderQueue(filter) {
           <button class="icon-action-btn neutral" title="Edit Entry" aria-label="Edit Entry" onclick="toggleEditPanel('${safeId}')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
           </button>
+          ${canDecide ? `<a href="javascript:void(0)" class="comment-toggle-link" style="margin:0;" onclick="this.style.display='none';this.nextElementSibling.style.display='block';">+ Comment</a>` : ''}
           <span class="hint" style="margin:0;">${canDecide ? 'Approve / Decline / Edit' : 'Edit Entry'}</span>
         </div>
+        ${canDecide ? `<textarea placeholder="Optional comment..." class="admin-comment" style="display:none;margin-top:8px;"></textarea>` : ''}
         <div id="editPanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
           <label style="margin-top:0;">Points</label>
           <input type="number" step="0.01" id="editPoints-${safeId}" value="${e.points}">
