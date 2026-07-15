@@ -29,7 +29,7 @@
     .app.admin-wide #adminGate{ max-width:420px; margin:0 auto; }
     .app.admin-wide #queueList{ display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
     .app.admin-wide #queueList .entry-card{ margin-bottom:0; }
-    .app.admin-wide #teamsList{ display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+    .app.admin-wide #teamsList{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; align-items:start; }
     .app.admin-wide #teamsList .team-card{ margin-bottom:0; }
     .app.admin-wide #adminLeaderboardList{ max-width:520px; margin:0 auto; }
     .app.admin-wide .toggle-tabs{ max-width:520px; margin:0 auto 18px; }
@@ -607,9 +607,11 @@
           <button class="lbFilterBtn" data-filter="20">Top 20</button>
         </div>
 
-        <button type="button" class="primary" id="lbCopyImgBtn">🖼️ Copy Image</button>
-        <button type="button" class="secondary" id="lbDownloadImgBtn">⬇ Download Image</button>
-        <button type="button" class="secondary" id="lbCopyBtn">📋 Copy as Text</button>
+        <div class="team-action-row" style="margin-top:14px;flex-wrap:wrap;">
+          <button type="button" class="primary" id="lbCopyImgBtn" style="flex:2;width:auto;margin-top:0;">🖼️ Copy Image</button>
+          <button type="button" class="secondary" id="lbDownloadImgBtn" style="flex:1;width:auto;margin-top:0;">⬇ Download</button>
+          <button type="button" class="secondary" id="lbCopyBtn" style="flex:1;width:auto;margin-top:0;">📋 Text</button>
+        </div>
         <div id="lbCopyMsg" class="msg"></div>
         <canvas id="lbCanvas" style="display:none;"></canvas>
       </div>
@@ -877,6 +879,7 @@ async function initRegisterView() {
     return;
   }
 
+  showLoading('Loading registration…');
   try {
     const res = await fetch(SCRIPT_URL + '?action=settings');
     const data = await res.json();
@@ -887,6 +890,8 @@ async function initRegisterView() {
     mechanicsPdfUrl = data.success ? data.settings.mechanicsPdfUrl : null;
   } catch (err) {
     mechanicsPdfUrl = null;
+  } finally {
+    hideLoading();
   }
 
   onboardStep = 0;
@@ -1145,6 +1150,7 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
 
   const btn = this;
   btn.disabled = true; btn.textContent = 'Finding…';
+  showLoading('Finding your team…');
   try {
     const res = await fetch(SCRIPT_URL + '?action=lookup&code=' + encodeURIComponent(code));
     const data = await res.json();
@@ -1164,6 +1170,7 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
   } catch (err) {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server. Check your connection and try again.';
   } finally {
+    hideLoading();
     btn.disabled = false; btn.textContent = 'Find My Team';
   }
 });
@@ -1858,15 +1865,30 @@ async function loadTeams() {
       const safeId = t.teamName.replace(/[^a-zA-Z0-9]/g, '');
       const teamNameEsc = t.teamName.replace(/'/g, "\\'");
       const subsLeft = 1 - (t.substitutionsUsed || 0);
+      const activeMembers = t.members.filter(m => m.name);
+      const strikeCount = activeMembers.reduce((sum, m) => sum + (m.strikes || 0), 0);
       return `
-      <div class="team-card">
-        <div class="head">
-          <strong>${t.teamName}</strong>
-          <span class="code">${t.teamCode}</span>
-        </div>
-        <div class="roster">Leader: ${t.teamLeaderName} · Status: ${t.status} · Substitutions left: ${subsLeft}</div>
+      <div class="team-card" style="padding:0;overflow:hidden;">
+        <button type="button" onclick="toggleTeamDetail('${safeId}')"
+          style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px;border:none;background:#fff;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="display:flex;align-items:center;gap:8px;min-width:0;">
+            <span class="status-dot ${t.status === 'Active' ? 'approved' : 'declined'}" style="flex-shrink:0;">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>
+            </span>
+            <strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.teamName}</strong>
+            ${strikeCount > 0 ? `<span style="color:#a4292f;font-weight:700;font-size:11px;flex-shrink:0;">${strikeCount} strike${strikeCount > 1 ? 's' : ''}</span>` : ''}
+          </span>
+          <span style="display:flex;align-items:center;gap:8px;flex-shrink:0;font-size:11px;color:#999;">
+            <span class="code" style="font-size:10px;">${t.teamCode}</span>
+            <span>${activeMembers.length} members</span>
+            <svg id="chevron-${safeId}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform .15s;"><path d="M6 9l6 6 6-6"/></svg>
+          </span>
+        </button>
+
+        <div id="teamDetail-${safeId}" style="display:none;padding:0 14px 14px;border-top:1px solid #f0f0f0;">
+        <div class="roster" style="margin-top:10px;">Leader: ${t.teamLeaderName} · Status: ${t.status} · Substitutions left: ${subsLeft}</div>
         <div style="margin:8px 0;">
-          ${t.members.filter(m => m.name).map(m => `
+          ${activeMembers.map(m => `
             <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:12px;">
               <span>${m.name}${m.separated ? ' <span style="color:#999;">(Separated)</span>' : ''}${m.strikes > 0 ? ' <span style="color:#a4292f;font-weight:700;">(' + m.strikes + ' strike' + (m.strikes > 1 ? 's' : '') + ')</span>' : ''}</span>
               <button type="button" class="icon-btn ${m.separated ? 'active' : ''}"
@@ -1900,7 +1922,7 @@ async function loadTeams() {
         <div id="violationPanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
           <label style="margin-top:0;">Member</label>
           <select id="violationMember-${safeId}">
-            ${t.members.filter(m => m.name).map(m => `<option value="${m.strava}" data-name="${m.name}">${m.name} (${m.strava})</option>`).join('')}
+            ${activeMembers.map(m => `<option value="${m.strava}" data-name="${m.name}">${m.name} (${m.strava})</option>`).join('')}
           </select>
           <label>Reason</label>
           <textarea id="violationReason-${safeId}" placeholder="What rule was broken?"></textarea>
@@ -1911,7 +1933,7 @@ async function loadTeams() {
         <div id="replacePanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
           <label style="margin-top:0;">Outgoing Member</label>
           <select id="replaceOld-${safeId}">
-            ${t.members.filter(m => m.name).map(m => `<option value="${m.strava}">${m.name} (${m.strava})</option>`).join('')}
+            ${activeMembers.map(m => `<option value="${m.strava}">${m.name} (${m.strava})</option>`).join('')}
           </select>
           <label>New Member's Full Name</label>
           <input type="text" id="replaceNewName-${safeId}">
@@ -1948,12 +1970,21 @@ async function loadTeams() {
           <textarea id="noticeText-${safeId}" placeholder="e.g. disqualification notice, warning, or any other update for this team"></textarea>
           <button type="button" class="primary" style="margin-top:6px;" onclick="postNotice('${teamNameEsc}','${safeId}',this)">Post Notice</button>
         </div>
+        </div>
       </div>
     `;
     }).join('');
   } catch (err) {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
+}
+
+function toggleTeamDetail(safeId) {
+  const detail = document.getElementById('teamDetail-' + safeId);
+  const chevron = document.getElementById('chevron-' + safeId);
+  const isOpen = detail.style.display === 'block';
+  detail.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
 function toggleViolationPanel(safeId) {
