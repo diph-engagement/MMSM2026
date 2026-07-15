@@ -145,11 +145,16 @@
     font-weight:700; font-size:13px; cursor:pointer; color:#666; font-family:inherit;
   }
   .toggle-tabs button.active{ background:var(--purple); border-color:var(--purple); color:#fff; }
-  .tab-count{
-    display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px;
-    padding:0 5px; border-radius:10px; background:var(--orange); color:#fff; font-size:10px; font-weight:800; margin-left:4px;
+  .adminTabBtn{
+    flex:1; padding:13px; border-radius:10px; border:1.5px solid #e2e2e2; background:#fff;
+    cursor:pointer; color:#666; font-family:inherit; display:flex; align-items:center; justify-content:center;
   }
-  .adminTabBtn.active .tab-count{ background:#fff; color:var(--purple); }
+  .adminTabBtn.active{ background:var(--purple); border-color:var(--purple); color:#fff; }
+  .tab-count-badge{
+    position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px;
+    background:var(--orange); color:#fff; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;
+    border:1.5px solid #fff;
+  }
 
   .view{ display:none; }
   .view.active{ display:block; }
@@ -427,6 +432,14 @@
         <button type="button" id="catBBtn">Category B — Team Sport</button>
       </div>
 
+      <div id="specialActivityCard" style="display:none;background:linear-gradient(135deg,#FF6300,#E84500);border-radius:12px;padding:12px;margin-top:14px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.6z"/></svg>
+          <span style="font-size:12px;font-weight:700;color:#fff;">Special activity available</span>
+        </div>
+        <select id="specialActivitySelect" style="margin:0;"></select>
+      </div>
+
       <form id="entryForm">
         <div id="sectionA" class="subview active">
           <label>Activity Type</label>
@@ -546,11 +559,23 @@
 
   <div id="adminPanel" style="display:none;">
     <div class="toggle-tabs">
-      <button type="button" class="adminTabBtn active" data-tab="controls">Controls</button>
-      <button type="button" class="adminTabBtn" data-tab="queue">Review Queue <span id="queueTabCount" class="tab-count" style="display:none;"></span></button>
-      <button type="button" class="adminTabBtn" data-tab="teams">Teams</button>
-      <button type="button" class="adminTabBtn" data-tab="violations">Violations <span id="violationsTabCount" class="tab-count" style="display:none;"></span></button>
-      <button type="button" class="adminTabBtn" data-tab="leaderboard">Leaderboard</button>
+      <button type="button" class="adminTabBtn active" data-tab="controls" title="Controls">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+      <button type="button" class="adminTabBtn" data-tab="queue" title="Review Queue" style="position:relative;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <span id="queueTabCount" class="tab-count-badge" style="display:none;"></span>
+      </button>
+      <button type="button" class="adminTabBtn" data-tab="teams" title="Teams">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </button>
+      <button type="button" class="adminTabBtn" data-tab="violations" title="Violations" style="position:relative;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L2 20h20z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>
+        <span id="violationsTabCount" class="tab-count-badge" style="display:none;"></span>
+      </button>
+      <button type="button" class="adminTabBtn" data-tab="leaderboard" title="Leaderboard">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3"/></svg>
+      </button>
     </div>
 
     <div id="adminTab-controls" class="subview active">
@@ -593,6 +618,47 @@
         <input type="number" id="lateWindowInput" min="0" value="3">
         <button type="button" class="primary" id="lateWindowSaveBtn">Save Window</button>
         <div id="lateWindowMsg" class="msg"></div>
+      </div>
+
+      <div class="section-label">Special Activities (Boosters)</div>
+      <div class="card">
+        <p class="hint" style="margin-top:0;">Declare a special activity with bonus points. Only active, non-expired tags show up in the entry form, and only for a matching category/activity.</p>
+        <div id="specialActivitiesList"></div>
+        <div id="specialActivitiesMsg" class="msg"></div>
+
+        <label style="margin-top:14px;">Tag Name</label>
+        <input type="text" id="newTagName" placeholder="e.g. Founders Day Fun Run">
+        <label>Applies To</label>
+        <select id="newTagAppliesTo">
+          <option value="All">All entries</option>
+          <option value="Category A">Category A (any solo activity)</option>
+          <option value="Category B">Category B (any team sport)</option>
+          <option value="Walking">Walking only</option>
+          <option value="Running">Running only</option>
+          <option value="Solo Cardio Workout">Solo Cardio Workout only</option>
+          <option value="Basketball">Basketball only</option>
+          <option value="Volleyball">Volleyball only</option>
+          <option value="Badminton">Badminton only</option>
+          <option value="Pickleball">Pickleball only</option>
+          <option value="Football">Football only</option>
+        </select>
+        <div class="row2">
+          <div>
+            <label>Boost Type</label>
+            <select id="newTagBoostType">
+              <option value="Multiplier">Multiplier (e.g. 2x)</option>
+              <option value="Flat Bonus">Flat Bonus (e.g. +20 pts)</option>
+            </select>
+          </div>
+          <div>
+            <label>Boost Value</label>
+            <input type="number" step="0.1" id="newTagBoostValue" placeholder="2">
+          </div>
+        </div>
+        <label>Expiration Date (optional)</label>
+        <input type="date" id="newTagExpiration">
+        <button type="button" class="primary" id="createTagBtn">Create Tag</button>
+        <div id="createTagMsg" class="msg"></div>
       </div>
 
       <div class="section-label">Pre-Approved Sports</div>
@@ -646,6 +712,14 @@
 
         <label style="margin-top:0;">Announcement header</label>
         <input type="text" id="lbHeaderInput" value="Official Standings">
+
+        <label>Standings as of</label>
+        <div class="filter-row">
+          <button class="lbCheckpointBtn active" data-checkpoint="live" data-label="Official Standings">Live</button>
+          <button class="lbCheckpointBtn" data-checkpoint="2026-08-20" data-label="Day 20 Checkpoint">Day 20</button>
+          <button class="lbCheckpointBtn" data-checkpoint="2026-09-09" data-label="Day 40 Checkpoint">Day 40</button>
+          <button class="lbCheckpointBtn" data-checkpoint="2026-09-29" data-label="Final Tally">Final</button>
+        </div>
 
         <div class="filter-row" style="margin-top:12px;">
           <button class="lbFilterBtn active" data-filter="all">All Teams</button>
@@ -1225,6 +1299,7 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
       .join('');
 
     found.style.display = 'block';
+    refreshSpecialActivityCard();
   } catch (err) {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server. Check your connection and try again.';
   } finally {
@@ -1236,8 +1311,8 @@ document.getElementById('entryTeamCode').addEventListener('keydown', function(e)
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('entryFindTeamBtn').click(); }
 });
 
-document.getElementById('catABtn').onclick = () => setEntryCategory('A');
-document.getElementById('catBBtn').onclick = () => setEntryCategory('B');
+document.getElementById('catABtn').onclick = () => { setEntryCategory('A'); refreshSpecialActivityCard(); };
+document.getElementById('catBBtn').onclick = () => { setEntryCategory('B'); refreshSpecialActivityCard(); };
 function setEntryCategory(c){
   entryCategory = c;
   document.getElementById('catABtn').classList.toggle('active', c==='A');
@@ -1249,7 +1324,27 @@ document.getElementById('activityType').addEventListener('change', function(){
   const isWorkout = this.value === 'Solo Cardio Workout';
   document.getElementById('distanceField').style.display = isWorkout ? 'none' : 'block';
   document.getElementById('durationHint').style.display = isWorkout ? 'none' : 'block';
+  refreshSpecialActivityCard();
 });
+document.getElementById('sport').addEventListener('change', refreshSpecialActivityCard);
+
+async function refreshSpecialActivityCard() {
+  const card = document.getElementById('specialActivityCard');
+  const select = document.getElementById('specialActivitySelect');
+  if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) { card.style.display = 'none'; return; }
+  const activityTypeOrSport = entryCategory === 'A' ? document.getElementById('activityType').value : document.getElementById('sport').value;
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=special_activities&category=' + encodeURIComponent(entryCategory) + '&activityType=' + encodeURIComponent(activityTypeOrSport));
+    const data = await res.json();
+    if (!data.success || data.tags.length === 0) { card.style.display = 'none'; select.innerHTML = ''; return; }
+    select.innerHTML = '<option value="">None — regular scoring</option>' + data.tags.map(t =>
+      `<option value="${t.tagId}">${t.tagName} (${t.boostType === 'Multiplier' ? t.boostValue + 'x points' : '+' + t.boostValue + ' pts'})</option>`
+    ).join('');
+    card.style.display = 'block';
+  } catch (err) {
+    card.style.display = 'none';
+  }
+}
 
 document.getElementById('entryForm').addEventListener('submit', async function(e){
   e.preventDefault();
@@ -1264,6 +1359,8 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
   }
 
   let payload = { action: 'entry', teamName, stravaName, category: entryCategory };
+  const selectedTagId = document.getElementById('specialActivitySelect').value;
+  if (selectedTagId) payload.specialActivityTagId = selectedTagId;
   if (entryCategory === 'A') {
     const activityType = document.getElementById('activityType').value;
     payload.activityType = activityType;
@@ -1320,6 +1417,8 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
       let confirmText;
       if (String(data.status).indexOf('Late Submission') !== -1) {
         confirmText = 'This was logged outside the review window for the activity date, so it\'s being held for a quick check before it counts toward your team\'s tally.';
+      } else if (data.specialTag) {
+        confirmText = data.points + ' pts added to your team\'s tally — boosted by "' + data.specialTag + '"! ⭐';
       } else {
         confirmText = data.points ? (data.points + ' pts added to your team\'s tally.') : 'This has been recorded.';
       }
@@ -1329,6 +1428,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
       document.getElementById('entryConfirmView').scrollIntoView({ behavior: 'smooth', block: 'center' });
       document.getElementById('entryForm').reset();
       document.querySelectorAll('#entryForm .file-upload-box input[type="file"]').forEach(updateFileUploadBox);
+      refreshSpecialActivityCard();
     } else {
       msg.className = 'msg error';
       msg.textContent = data.error || 'Something went wrong — please try again.';
@@ -1448,7 +1548,7 @@ function renderMemberEntryRows(safeId, entries) {
   const rowHtml = (e, index) => `
     <div class="entry-mini-row" onclick="showEntryDetail('${safeId}', ${index})">
       <div class="entry-mini-left">
-        <span class="entry-mini-type">${e.activityType}</span><span class="entry-mini-date">${e.date}</span>
+        <span class="entry-mini-type">${e.activityType}</span><span class="entry-mini-date">${e.date}</span>${e.specialTag ? `<span title="Boosted by ${e.specialTag}"><svg width="12" height="12" viewBox="0 0 24 24" fill="#FF6300" stroke="none" style="vertical-align:-2px;margin-left:4px;"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.6z"/></svg></span>` : ''}
       </div>
       <div class="entry-mini-right">
         <span class="entry-mini-points">${e.points} pts</span>
@@ -1511,6 +1611,9 @@ function showEntryDetail(safeId, index) {
     <div style="margin-bottom:10px;"><strong>Points:</strong> <span style="color:var(--orange-deep);font-weight:700;">${e.points} pts</span></div>
     <div style="margin-bottom:10px;"><strong>Status:</strong> <span style="color:${statusColor};font-weight:700;">${e.status}</span></div>
   `;
+  if (e.specialTag) {
+    body += `<div style="margin-bottom:10px;"><strong>Special activity:</strong> <span style="color:var(--orange-deep);font-weight:700;">⭐ ${e.specialTag}</span></div>`;
+  }
   if (e.adminNotes && e.adminNotes.length) {
     body += e.adminNotes.map(n => `<div class="admin-note-card" style="margin-top:8px;">${n}</div>`).join('');
   }
@@ -1635,6 +1738,7 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     loadTeams();
     loadAdminLeaderboard();
     loadViolations();
+    loadSpecialActivities();
   } catch (err) {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
@@ -1855,6 +1959,110 @@ function updateQueueTabCount() {
 
 let allViolationsCache = [];
 
+async function loadSpecialActivities() {
+  const list = document.getElementById('specialActivitiesList');
+  const msg = document.getElementById('specialActivitiesMsg');
+  list.innerHTML = '<p class="hint">Loading…</p>'; msg.style.display = 'none';
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=admin_special_activities&adminKey=' + encodeURIComponent(adminKey));
+    const data = await res.json();
+    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    if (data.tags.length === 0) { list.innerHTML = '<p class="hint">No special activities created yet.</p>'; return; }
+    const today = new Date().toISOString().slice(0, 10);
+    list.innerHTML = data.tags.map(t => {
+      const expired = t.expirationDate && t.expirationDate < today;
+      const boostLabel = t.boostType === 'Multiplier' ? t.boostValue + 'x points' : '+' + t.boostValue + ' pts';
+      return `
+        <div class="team-card">
+          <div class="head">
+            <strong>${t.tagName}</strong>
+            <span class="code">${boostLabel}</span>
+          </div>
+          <div class="roster">Applies to: ${t.appliesTo}${t.expirationDate ? ' · Expires ' + t.expirationDate + (expired ? ' (expired)' : '') : ' · No expiration'}</div>
+          <div class="team-action-row" style="margin-top:8px;">
+            <button type="button" class="secondary" style="flex:1;width:auto;margin-top:0;" onclick="toggleTagActive('${t.tagId}', ${!t.active}, this)">
+              ${t.active ? 'Deactivate' : 'Activate'}
+            </button>
+            <button type="button" class="icon-btn" title="Delete this tag" aria-label="Delete tag" onclick="deleteTag('${t.tagId}', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+            </button>
+          </div>
+          <div class="hint" style="margin-top:6px;">${t.active && !expired ? '✓ Currently live in the entry form' : 'Not currently shown to participants'}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+  }
+}
+
+async function toggleTagActive(tagId, newActive, btnEl) {
+  btnEl.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_update_special_activity', adminKey, tagId, active: newActive }),
+    });
+    const data = await res.json();
+    if (data.success) { loadSpecialActivities(); }
+    else { alert(data.error || 'Could not update this tag.'); btnEl.disabled = false; }
+  } catch (err) {
+    alert('Could not reach the server.'); btnEl.disabled = false;
+  }
+}
+
+async function deleteTag(tagId, btnEl) {
+  if (!(await customConfirm('Delete this special activity tag? Entries already tagged with it keep their boosted points and icon — this only removes it from future submissions.'))) return;
+  btnEl.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_delete_special_activity', adminKey, tagId }),
+    });
+    const data = await res.json();
+    if (data.success) { loadSpecialActivities(); }
+    else { alert(data.error || 'Could not delete this tag.'); btnEl.disabled = false; }
+  } catch (err) {
+    alert('Could not reach the server.'); btnEl.disabled = false;
+  }
+}
+
+document.getElementById('createTagBtn').addEventListener('click', async function(){
+  const tagName = document.getElementById('newTagName').value.trim();
+  const appliesTo = document.getElementById('newTagAppliesTo').value;
+  const boostType = document.getElementById('newTagBoostType').value;
+  const boostValue = document.getElementById('newTagBoostValue').value;
+  const expirationDate = document.getElementById('newTagExpiration').value;
+  const msg = document.getElementById('createTagMsg');
+  msg.style.display = 'none';
+
+  if (!tagName || !boostValue) {
+    msg.className = 'msg error'; msg.textContent = 'Tag name and a boost value are required.'; return;
+  }
+
+  this.disabled = true; this.textContent = 'Creating…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_create_special_activity', adminKey, tagName, appliesTo, boostType, boostValue, expirationDate }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.className = 'msg success'; msg.textContent = 'Created — it\'s live in the entry form for matching activities.';
+      document.getElementById('newTagName').value = '';
+      document.getElementById('newTagBoostValue').value = '';
+      document.getElementById('newTagExpiration').value = '';
+      loadSpecialActivities();
+    } else {
+      msg.className = 'msg error'; msg.textContent = data.error || 'Could not create this tag.';
+    }
+  } catch (err) {
+    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+  } finally {
+    this.disabled = false; this.textContent = 'Create Tag';
+  }
+});
+
 async function loadViolations() {
   const list = document.getElementById('violationsList');
   const msg = document.getElementById('violationsMsg');
@@ -1966,11 +2174,12 @@ function renderQueue(filter) {
     const ageLabel = daysOld <= 0 ? 'Today' : daysOld === 1 ? '1 day old' : daysOld + ' days old';
     const ageClass = daysOld >= 3 ? 'flagged' : daysOld >= 1 ? 'pending' : 'approved';
     const clockIcon = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+    const starIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="#FF6300" stroke="none" style="vertical-align:-2px;margin-left:5px;"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7-5.4-4.7 7.1-.6z"/></svg>';
     return `
       <div class="entry-card" data-entry-id="${e.entryId}">
         <div class="top-row">
           <div>
-            <div class="team">${e.teamName} — ${e.stravaName}</div>
+            <div class="team">${e.teamName} — ${e.stravaName}${e.specialTag ? `<span title="Boosted by ${e.specialTag}">${starIcon}</span>` : ''}</div>
             <div class="meta">${e.category === 'A' ? e.activityType : e.sport || e.activityType} · ${e.activityDate} · ${e.distanceOrDuration || ''} · ${e.points} pts</div>
           </div>
           <div style="text-align:right;">
@@ -2243,12 +2452,16 @@ async function logViolation(teamName, safeId, btnEl) {
 
 let adminLeaderboardCache = [];
 
+let currentCheckpointCutoff = null; // null = live, otherwise 'yyyy-MM-dd'
+
 async function loadAdminLeaderboard() {
   const list = document.getElementById('adminLeaderboardList');
   const msg = document.getElementById('adminLeaderboardMsg');
   list.innerHTML = '<p class="hint">Loading…</p>'; msg.style.display = 'none';
   try {
-    const res = await fetch(SCRIPT_URL + '?action=admin_leaderboard&adminKey=' + encodeURIComponent(adminKey));
+    let url = SCRIPT_URL + '?action=admin_leaderboard&adminKey=' + encodeURIComponent(adminKey);
+    if (currentCheckpointCutoff) url += '&asOf=' + encodeURIComponent(currentCheckpointCutoff);
+    const res = await fetch(url);
     const data = await res.json();
     if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     adminLeaderboardCache = data.leaderboard;
@@ -2257,6 +2470,16 @@ async function loadAdminLeaderboard() {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
 }
+
+document.querySelectorAll('.lbCheckpointBtn').forEach(btn => {
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.lbCheckpointBtn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentCheckpointCutoff = this.dataset.checkpoint === 'live' ? null : this.dataset.checkpoint;
+    document.getElementById('lbHeaderInput').value = this.dataset.label;
+    loadAdminLeaderboard();
+  });
+});
 
 function renderAdminLeaderboard(filter) {
   const list = document.getElementById('adminLeaderboardList');
