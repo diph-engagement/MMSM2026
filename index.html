@@ -2260,31 +2260,31 @@ function renderQueue(filter) {
             <div class="team">${e.teamName} — ${e.stravaName}${e.specialTag ? `<span title="Boosted by ${e.specialTag}">${starIcon}</span>` : ''}</div>
             <div class="meta">${e.category === 'A' ? e.activityType : e.sport || e.activityType} · ${e.activityDate} · ${e.distanceOrDuration || ''} · ${e.points} pts</div>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span class="badge ${badgeClass(e.status)}">${e.status}</span>
-              ${canDecide ? `<span class="badge ${ageClass}" title="${ageLabel}">${clockIcon}${daysOld <= 0 ? 'New' : daysOld + 'd'}</span>` : ''}
-            </div>
-            <div style="display:flex;gap:6px;">
-              ${canDecide ? `
-                <button class="icon-action-btn approve" title="Approve this entry" aria-label="Approve" onclick="reviewEntry('${e.entryId}','approve',this)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                </button>
-                <button class="icon-action-btn decline" title="Decline this entry" aria-label="Decline" onclick="reviewEntry('${e.entryId}','decline',this)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-              ` : ''}
-              <button class="icon-action-btn neutral" title="Edit Entry" aria-label="Edit Entry" onclick="toggleEditPanel('${safeId}')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
-              </button>
-            </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span class="badge ${badgeClass(e.status)}">${e.status}</span>
+            ${canDecide ? `<span class="badge ${ageClass}" title="${ageLabel}">${clockIcon}${daysOld <= 0 ? 'New' : daysOld + 'd'}</span>` : ''}
           </div>
         </div>
-        <div class="links">
-          ${e.stravaLink ? `<a href="${e.stravaLink}" target="_blank">Strava Link</a>` : ''}
-          ${e.proofLink1 ? `<a href="${e.proofLink1}" target="_blank">Start Proof</a>` : ''}
-          ${e.proofLink2 ? `<a href="${e.proofLink2}" target="_blank">End Proof</a>` : ''}
-          ${canDecide ? `<a href="javascript:void(0)" class="comment-toggle-link" style="margin:0 0 0 10px;" onclick="this.style.display='none';this.nextElementSibling.style.display='block';">+ Comment</a>` : ''}
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap;">
+          <div class="links" style="margin:0;">
+            ${e.stravaLink ? `<a href="${e.stravaLink}" target="_blank">Strava Link</a>` : ''}
+            ${e.proofLink1 ? `<a href="${e.proofLink1}" target="_blank">Start Proof</a>` : ''}
+            ${e.proofLink2 ? `<a href="${e.proofLink2}" target="_blank">End Proof</a>` : ''}
+            ${canDecide ? `<a href="javascript:void(0)" class="comment-toggle-link" style="margin:0 0 0 10px;" onclick="this.style.display='none';this.nextElementSibling.style.display='block';">+ Comment</a>` : ''}
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            ${canDecide ? `
+              <button class="icon-action-btn approve" title="Approve this entry" aria-label="Approve" onclick="reviewEntry('${e.entryId}','approve',this)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              </button>
+              <button class="icon-action-btn decline" title="Decline this entry" aria-label="Decline" onclick="reviewEntry('${e.entryId}','decline',this)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            ` : ''}
+            <button class="icon-action-btn neutral" title="Edit Entry" aria-label="Edit Entry" onclick="toggleEditPanel('${safeId}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+            </button>
+          </div>
         </div>
         ${e.notes ? `<div class="hint">${e.notes}</div>` : ''}
         ${canDecide ? `<textarea placeholder="Optional comment..." class="admin-comment" style="display:none;margin-top:8px;"></textarea>` : ''}
