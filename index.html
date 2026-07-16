@@ -86,6 +86,8 @@
     border:none; cursor:pointer; font-family:inherit;
   }
   .grid-card:active{ transform:scale(.97); }
+  .grid-card.closed{ opacity:.45; pointer-events:none; filter:grayscale(60%); }
+  .grid-card.closed p{ color:#a4292f; font-weight:700; }
   .grid-card .icon-circle{
     width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center;
   }
@@ -387,20 +389,20 @@
       </div>
 
       <div class="grid-2">
-        <button class="grid-card" onclick="navigate('register')">
+        <button class="grid-card" id="cardRegister" onclick="navigate('register')">
           <div class="icon-circle purple">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="6" y="4" width="12" height="16" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6M9 15h4"/></svg>
           </div>
           <h3>Register Team</h3>
-          <p>One-time sign-up</p>
+          <p id="cardRegisterSub">One-time sign-up</p>
         </button>
 
-        <button class="grid-card" onclick="navigate('entry')">
+        <button class="grid-card" id="cardEntry" onclick="navigate('entry')">
           <div class="icon-circle orange">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>
           </div>
           <h3>Submit Entry</h3>
-          <p>Log an activity</p>
+          <p id="cardEntrySub">Log an activity</p>
         </button>
 
         <button class="grid-card" onclick="navigate('performance')">
@@ -411,12 +413,12 @@
           <p>Check with your code</p>
         </button>
 
-        <button class="grid-card" onclick="navigate('leaderboard')">
+        <button class="grid-card" id="cardLeaderboard" onclick="navigate('leaderboard')">
           <div class="icon-circle orange">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3"/></svg>
           </div>
           <h3>Leaderboard</h3>
-          <p>See the rankings</p>
+          <p id="cardLeaderboardSub">See the rankings</p>
         </button>
 
         <button class="grid-card" onclick="navigate('rules')">
@@ -529,7 +531,11 @@
     <section id="view-entry" class="view">
   <div class="view-title"><h2>Submit an Entry</h2><p>One submission per activity — submitted by you</p></div>
   <div id="ftg-entry"></div>
-  <div class="card">
+  <div id="entryClosedMsg" class="card" style="display:none;text-align:center;">
+    <p style="font-size:15px;font-weight:700;color:#a4292f;margin:0 0 6px;">Entry submissions are currently closed</p>
+    <p style="font-size:13px;color:#666;margin:0;">Check with the People &amp; Culture Team for when logging reopens.</p>
+  </div>
+  <div class="card" id="entryFormCard">
     <label>Team Code</label>
     <input type="text" id="entryTeamCode" placeholder="MMSM-XXXXXX" style="text-transform:uppercase;">
     <button type="button" class="secondary" id="entryFindTeamBtn">Find My Team</button>
@@ -734,6 +740,10 @@
         <div class="switch-row">
           <div><div class="label">Entry Submissions</div><div class="sub">Open for logging activities</div></div>
           <button class="switch" id="swEntries"></button>
+        </div>
+        <div class="switch-row">
+          <div><div class="label">Leaderboard Page</div><div class="sub">Whether participants can open the Leaderboard at all</div></div>
+          <button class="switch" id="swLeaderboardOpen"></button>
         </div>
         <div class="switch-row">
           <div><div class="label">Reveal Leaderboard</div><div class="sub">Show real team names and points to participants (normally at Checkpoints)</div></div>
@@ -1561,9 +1571,11 @@ function renderRoute() {
 
   if (view === "entry" && !window.__rosterLoaded) loadRosterHint();
   if (view === "entry" && !window.__sportsLoaded) loadSportOptions();
+  if (view === "entry") checkEntriesOpenGate();
   if (view === "register") initRegisterView();
   if (view === "leaderboard") loadLeaderboard();
   if (view === "rules" && !window.__rulebookRendered) { renderRulebook(); window.__rulebookRendered = true; }
+  if (view === "home") applyHomeCardAvailability();
 
   if (view === "entry") showFirstTimeGuide('entry', 'ftg-entry',
     "First time here? Pick Category A (solo) or B (team sport), then paste your own Strava link and details — there's no auto-sync, so type the real distance/duration yourself.");
@@ -1574,6 +1586,60 @@ function renderRoute() {
 }
 window.addEventListener("hashchange", renderRoute);
 document.addEventListener("DOMContentLoaded", renderRoute);
+
+async function applyHomeCardAvailability() {
+  if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) return;
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=settings');
+    const data = await res.json();
+    if (!data.success) return;
+    const regCard = document.getElementById('cardRegister');
+    const regSub = document.getElementById('cardRegisterSub');
+    if (data.settings.registrationOpen === false) {
+      regCard.classList.add('closed');
+      regSub.textContent = 'Currently closed';
+    } else {
+      regCard.classList.remove('closed');
+      regSub.textContent = 'One-time sign-up';
+    }
+    const entryCard = document.getElementById('cardEntry');
+    const entrySub = document.getElementById('cardEntrySub');
+    if (data.settings.entriesOpen === false) {
+      entryCard.classList.add('closed');
+      entrySub.textContent = 'Currently closed';
+    } else {
+      entryCard.classList.remove('closed');
+      entrySub.textContent = 'Log an activity';
+    }
+    const lbCard = document.getElementById('cardLeaderboard');
+    const lbSub = document.getElementById('cardLeaderboardSub');
+    if (data.settings.leaderboardOpen === false) {
+      lbCard.classList.add('closed');
+      lbSub.textContent = 'Currently unavailable';
+    } else {
+      lbCard.classList.remove('closed');
+      lbSub.textContent = 'See the rankings';
+    }
+  } catch (err) {
+    // If this fails, cards just stay in their default enabled state — not worth blocking the home screen over.
+  }
+}
+
+async function checkEntriesOpenGate() {
+  document.getElementById('entryClosedMsg').style.display = 'none';
+  document.getElementById('entryFormCard').style.display = 'block';
+  if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) return;
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=settings');
+    const data = await res.json();
+    if (data.success && data.settings.entriesOpen === false) {
+      document.getElementById('entryClosedMsg').style.display = 'block';
+      document.getElementById('entryFormCard').style.display = 'none';
+    }
+  } catch (err) {
+    // If the check fails, fail open rather than blocking a legitimate submission over a network hiccup.
+  }
+}
 
 function showFirstTimeGuide(key, containerId, message) {
   const container = document.getElementById(containerId);
@@ -2503,6 +2569,7 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     document.getElementById('adminPanel').style.display = 'block';
     applySwitchState('swRegistration', data.settings.registrationOpen);
     applySwitchState('swEntries', data.settings.entriesOpen);
+    applySwitchState('swLeaderboardOpen', data.settings.leaderboardOpen);
     applySwitchState('swLeaderboard', data.settings.leaderboardRevealed);
     if (Array.isArray(data.settings.approvedSports)) {
       document.getElementById('sportsInput').value = data.settings.approvedSports.join(', ');
@@ -2578,6 +2645,7 @@ async function toggleSetting(key, switchId) {
 }
 document.getElementById('swRegistration').addEventListener('click', () => toggleSetting('registrationOpen', 'swRegistration'));
 document.getElementById('swEntries').addEventListener('click', () => toggleSetting('entriesOpen', 'swEntries'));
+document.getElementById('swLeaderboardOpen').addEventListener('click', () => toggleSetting('leaderboardOpen', 'swLeaderboardOpen'));
 document.getElementById('swLeaderboard').addEventListener('click', () => toggleSetting('leaderboardRevealed', 'swLeaderboard'));
 
 function toLocalDatetimeInputValue(isoString) {
