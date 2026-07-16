@@ -108,6 +108,17 @@
     margin:20px 0 10px; padding-top:14px; border-top:1px solid #eee;
   }
   .section-label:first-child{ margin-top:0; border-top:none; padding-top:0; }
+  .accordion-header{
+    width:100%; display:flex; justify-content:space-between; align-items:center; gap:12px;
+    background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); border-radius:14px;
+    padding:14px 16px; margin:12px 0 0; cursor:pointer; font-family:inherit; text-align:left;
+  }
+  .accordion-header:active{ background:rgba(255,255,255,.16); }
+  .accordion-title{ font-weight:700; color:#fff; font-size:14px; }
+  .accordion-desc{ font-size:12px; color:rgba(255,255,255,.68); margin-top:3px; line-height:1.4; }
+  .accordion-chevron{ flex-shrink:0; color:#fff; transition:transform .2s ease; }
+  .accordion-chevron.open{ transform:rotate(180deg); }
+  .accordion-body{ margin:10px 0 0; }
   label{ display:block; font-size:13px; font-weight:600; color:#444; margin-bottom:5px; margin-top:12px; }
   input, select, textarea{
     width:100%; padding:12px 13px; border:1.5px solid #e2e2e2; border-radius:10px; font-size:15px;
@@ -720,8 +731,14 @@
       </div>
       <div id="controlsMsg" class="msg"></div>
 
-      <div class="section-label">Registration Closing Date</div>
-      <div class="card">
+      <button type="button" class="accordion-header" onclick="toggleAccordion('regClose')">
+        <div>
+          <div class="accordion-title">Registration Closing Date</div>
+          <div class="accordion-desc">Set when registration closes — powers the home screen countdown.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-regClose" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-regClose" style="display:none;">
         <p class="hint" style="margin-top:0;">Powers the home screen countdown once Registration is the current milestone.</p>
         <label style="margin-top:0;">Closes at (your local time)</label>
         <input type="datetime-local" id="regCloseInput">
@@ -729,15 +746,27 @@
         <div id="regCloseMsg" class="msg"></div>
       </div>
 
-      <div class="section-label">Weekly Minimum Penalty</div>
-      <div class="card">
+      <button type="button" class="accordion-header" onclick="toggleAccordion('weeklyPenalty')">
+        <div>
+          <div class="accordion-title">Weekly Minimum Penalty</div>
+          <div class="accordion-desc">Auto-checks the weekly activity minimum every Monday — held for your approval.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-weeklyPenalty" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-weeklyPenalty" style="display:none;">
         <p class="hint" style="margin-top:0;">Runs automatically every Monday morning, checking the week that just closed. Any team with an active member who logged fewer than 2 activities gets a -20 point deduction <strong>held pending your approval</strong> in the Review Queue (Section 7.1) — it won't count, and the team won't be notified, until you approve it there. Idempotent — running it again for a week already checked does nothing.</p>
         <button type="button" class="secondary" id="runWeeklyPenaltyBtn">Run Check Now (for testing)</button>
         <div id="weeklyPenaltyMsg" class="msg"></div>
       </div>
 
-      <div class="section-label">Scoring Rules</div>
-      <div class="card">
+      <button type="button" class="accordion-header" onclick="toggleAccordion('scoringRules')">
+        <div>
+          <div class="accordion-title">Scoring Rules</div>
+          <div class="accordion-desc">Adjust point rates, daily caps, and penalty amounts — applies to new entries only.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-scoringRules" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-scoringRules" style="display:none;">
         <p class="hint" style="margin-top:0;">These control the actual scoring math — changing them takes effect on the <strong>next</strong> entry submitted, not retroactively. The Rules &amp; FAQ page shown to participants automatically reflects whatever you save here.</p>
 
         <p class="rb-sub" style="margin-top:0;">Category A — Solo Activities</p>
@@ -775,8 +804,14 @@
         <div id="scoringRulesMsg" class="msg"></div>
       </div>
 
-      <div class="section-label">Late Submission Window</div>
-      <div class="card">
+      <button type="button" class="accordion-header" onclick="toggleAccordion('lateWindow')">
+        <div>
+          <div class="accordion-title">Late Submission Window</div>
+          <div class="accordion-desc">How many days late an entry can be logged before it's held for review.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-lateWindow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-lateWindow" style="display:none;">
         <p class="hint" style="margin-top:0;">Entries submitted more than this many days after the activity date are held with 0 points ("Pending Approval — Late Submission") until you review and approve them — this keeps the live leaderboard from being skewed by entries dumped in late.</p>
         <label style="margin-top:0;">Window (days)</label>
         <input type="number" id="lateWindowInput" min="0" value="3">
@@ -784,8 +819,14 @@
         <div id="lateWindowMsg" class="msg"></div>
       </div>
 
-      <div class="section-label">Special Activities (Boosters)</div>
-      <div class="card">
+      <button type="button" class="accordion-header" onclick="toggleAccordion('specialActivities')">
+        <div>
+          <div class="accordion-title">Special Activities (Boosters)</div>
+          <div class="accordion-desc">Create bonus-point tags for special events or occasions.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-specialActivities" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-specialActivities" style="display:none;">
         <p class="hint" style="margin-top:0;">Declare a special activity with bonus points. Only active, non-expired tags show up in the entry form, and only for a matching category/activity.</p>
         <div id="specialActivitiesList"></div>
         <div id="specialActivitiesMsg" class="msg"></div>
@@ -825,8 +866,14 @@
         <div id="createTagMsg" class="msg"></div>
       </div>
 
-      <div class="section-label">Pre-Approved Sports</div>
-      <div class="card">
+      <button type="button" class="accordion-header" onclick="toggleAccordion('sports')">
+        <div>
+          <div class="accordion-title">Pre-Approved Sports</div>
+          <div class="accordion-desc">Team sports that count without needing case-by-case approval.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-sports" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-sports" style="display:none;">
         <p class="hint" style="margin-top:0;">Category B sports that count without needing case-by-case approval. Anything else a team requests still lands in the Review Queue as "Pending Approval."</p>
         <label style="margin-top:0;">Sports (comma-separated)</label>
         <input type="text" id="sportsInput" placeholder="Basketball, Volleyball, Badminton, Pickleball, Football">
@@ -834,8 +881,14 @@
         <div id="sportsMsg" class="msg"></div>
       </div>
 
-      <div class="section-label">Full Mechanics PDF</div>
-      <div class="card">
+      <button type="button" class="accordion-header" onclick="toggleAccordion('pdf')">
+        <div>
+          <div class="accordion-title">Full Mechanics PDF</div>
+          <div class="accordion-desc">Upload the document teams must read before registering.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-pdf" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-pdf" style="display:none;">
         <p class="hint" style="margin-top:0;">This is the document teams must download before registering.</p>
         <p id="currentPdfLabel" style="font-size:13px;font-weight:600;color:var(--ink);">No file uploaded yet.</p>
         <label class="file-upload-box" for="pdfFileInput" data-default-text="Tap to choose a PDF">
@@ -1797,6 +1850,14 @@ document.getElementById('registerAnotherBtn').addEventListener('click', function
 });
 
 // ============ ENTRY SUBMISSION ============
+function toggleAccordion(id) {
+  const body = document.getElementById('body-' + id);
+  const chevron = document.getElementById('chevron-' + id);
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  chevron.classList.toggle('open', !isOpen);
+}
+
 function updateFileUploadBox(input) {
   const box = input.closest('.file-upload-box');
   const textEl = box.querySelector('.upload-text');
