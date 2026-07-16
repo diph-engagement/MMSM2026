@@ -1192,14 +1192,14 @@ const RULEBOOK = [
       <li>P&amp;C or the Fair Play Committee can ask for your original screenshot at random. No response within 24 hours means that entry doesn't count.</li>
     </ul>
   `},
-  { id: 'submitting', title: 'Submitting Entries', section: 'Section 5.4', html: `
+  { id: 'submitting', title: 'Submitting Entries', section: 'Section 5.4', html: (cfg) => `
     <p>All proof goes through one place — the app itself — so P&amp;C can check and score everything the same way.</p>
     <ul>
       <li>Submit through the app — one submission per activity. The Team Leader doesn't need to collect anyone's proof by hand.</li>
       <li>Include: Team Name, your Declared Strava Name, activity, date, Strava screenshot (Category A), or start/end photos + Team Leader confirmation (Category B).</li>
       <li>Everything is stored in one master log — no separate spreadsheets or chat submissions count.</li>
       <li>Weekly deadline: Sunday 11:59 PM Philippine Time for that week's informal update.</li>
-      <li><strong>Submit close to the activity date.</strong> Entries logged more than 3 days later are held at 0 points until P&amp;C approves them — this stops old activities from being dumped in right before a Checkpoint to game the leaderboard.</li>
+      <li><strong>Submit close to the activity date.</strong> Entries logged more than ${cfg.lateSubmissionWindowDays} day${cfg.lateSubmissionWindowDays === 1 ? '' : 's'} later are held at 0 points until P&amp;C approves them — this stops old activities from being dumped in right before a Checkpoint to game the leaderboard.</li>
       <li>The Team Leader's job is double-checking the log for their team, not collecting proof.</li>
     </ul>
   `},
@@ -1215,7 +1215,7 @@ const RULEBOOK = [
     <p class="rb-note">Only full 30-minute blocks count for workouts — a 45-minute session earns one block, not 1.5. Blocks are per-session, not summed across the day.</p>
     <p class="rb-sub">Category B — Team &amp; Court Sports</p>
     <ul>
-      <li>Pre-approved: Basketball, Volleyball, Badminton, Pickleball, Football. Any other sport needs P&amp;C approval <em>before</em> you play it, or it earns zero points. Response within 2 business days.</li>
+      <li>Pre-approved: ${cfg.approvedSports.join(', ')}. Any other sport needs P&amp;C approval <em>before</em> you play it, or it earns zero points. Response within 2 business days.</li>
       <li>Flat ${cfg.categoryBPoints} points per person, once a day, no matter how long the game runs.</li>
       <li>Only one Category B session counts per person per day, even across multiple sports.</li>
     </ul>
@@ -1268,7 +1268,7 @@ const RULEBOOK = [
     <p class="rb-sub">Tie-Breakers</p>
     <p>Ties are broken first by total Category A distance logged, then a coin toss by the Fair Play Committee. A team with a disqualified member can still be included in the official standings, as long as at least 3 members remain active.</p>
   `},
-  { id: 'faq', title: 'FAQ', section: 'Section 11', html: `
+  { id: 'faq', title: 'FAQ', section: 'Section 11', html: (cfg) => `
     ${[
       ["Can I be on a team with people from a different LOB?", "Yes. Teams may be same-LOB or mixed-LOB this season."],
       ["Do I need to use my real name on Strava?", "No. Use any nickname, but declare it at registration and don't change it mid-event."],
@@ -1277,15 +1277,20 @@ const RULEBOOK = [
       ["My workout was 45 minutes — why only one block's worth of points?", "Only full 30-minute blocks count. 45 minutes earns one block, not 1.5."],
       ["I did two 20-minute workouts in one day — do they add up?", "No. Blocks are counted per individual session, not summed across the day."],
       ["Can I log a treadmill run?", "Yes — log it as a Solo Cardio Workout instead of Running, since treadmills have no GPS."],
+      ["What if my Strava failed and did not track my activity?", "Unfortunately, without GPS-tracked data, that activity can't be scored — typed-in distances aren't accepted for anyone, since there'd be no way to tell a genuine tracking failure from someone just not tracking at all. Double-check your phone's location permissions for Strava before your next session. If this keeps happening to you specifically, flag it to People & Culture — repeated technical issues might warrant a manual look, at their discretion (Section 7.2)."],
+      ["How can I use input from a non-Strava app?", "You don't have to track directly inside the Strava app. If your smartwatch, Garmin, Coros, Apple Watch, or another fitness app can sync or export to Strava, that's completely fine — what matters is that the activity ends up as a real, GPS-tracked entry on your Strava account, visible to Everyone, before you submit its link. The synced activity still needs genuine GPS data though — typed or manually-edited distances earn zero points regardless of which app originally captured it."],
+      ["Does walking during a break count, like lunch?", "Yes — a walk during a scheduled break counts, as long as it's a real, standalone session with a clear start and end (e.g., a 20-minute walk during lunch), not just wandering to grab food and back in a few minutes."],
+      ["What about walking during active work hours — between meetings, to the printer, around the office?", "That doesn't count, even if it happens to be continuous. Walking woven into your actual work tasks isn't a dedicated activity session — log a genuine walk during a break or outside work hours instead."],
+      ["Does walking done while running errands count, like on a weekend or after your shift?", "Yes — same rule as any other walk: a clear start and end, tracked as one continuous session. The reason for the walk doesn't matter."],
       ["Can I count cycling or driving?", "No. Motor-assisted or wheeled movement isn't eligible under any category."],
       ["We played basketball then volleyball same day — two Category B sessions?", "No. Only one Category B session counts per person per day."],
-      ["Is basketball the only team sport that counts?", "Basketball, volleyball, badminton, pickleball, and football are pre-approved. Others need P&C sign-off before you play."],
+      ["Is basketball the only team sport that counts?", cfg.approvedSports.join(', ') + " are pre-approved. Others need P&C sign-off before you play."],
       ["What if a teammate resigns or goes on leave mid-challenge?", "The Team Leader requests a substitution through P&C (only for 5+ day leave or separation) — one per team all season. Or the departing member can be marked Separated instead."],
       ["What if our roster drops below 5?", "The team may keep logging, but needs at least 3 active members at Final Tally to remain eligible for the official standings."],
       ["What if two teams tie at the end?", "Broken first by total Category A distance, then a coin toss by the Fair Play Committee."],
       ["Can I delete an activity after submitting it?", "Not once it's flagged or audited — deleting it is treated as a violation on its own."],
       ["What time zone is the weekly deadline in?", "Philippine Time — entries due by 11:59 PM Sunday."],
-      ["I forgot to log an activity from a few days ago — can I still submit it?", "Yes, within 3 days it counts normally. Later than that, it's held at 0 points until P&C approves it."],
+      ["I forgot to log an activity from a few days ago — can I still submit it?", "Yes, within " + cfg.lateSubmissionWindowDays + " day" + (cfg.lateSubmissionWindowDays === 1 ? "" : "s") + " it counts normally. Later than that, it's held at 0 points until P&C approves it."],
       ["What if my requested sport isn't approved in time?", "P&C responds within 2 business days — submit early, not the day you plan to play."],
       ["Will our proof photos be shared publicly?", "No — only used to check your entry."],
       ["What if I need to flag my own Team Leader?", "Any other team member can raise it directly with P&C."],
@@ -1308,11 +1313,19 @@ async function ensureRulebookScoringConfig() {
     cardioPerBlock: 5, cardioCapBlocks: 2, cardioCapPoints: 10,
     categoryBPoints: 15, dailyPointCap: 100,
     weeklyMinActivities: 2, weeklyMinPenalty: 20, secondViolationPenalty: 20,
+    approvedSports: ['Basketball', 'Volleyball', 'Badminton', 'Pickleball', 'Football'],
+    lateSubmissionWindowDays: 3,
   };
   try {
     const res = await fetch(SCRIPT_URL + '?action=settings');
     const data = await res.json();
     __rulebookScoringConfig = (data.success && data.settings.scoring) ? data.settings.scoring : fallback;
+    if (data.success) {
+      __rulebookScoringConfig.approvedSports = Array.isArray(data.settings.approvedSports) && data.settings.approvedSports.length > 0
+        ? data.settings.approvedSports : fallback.approvedSports;
+      __rulebookScoringConfig.lateSubmissionWindowDays = data.settings.lateSubmissionWindowDays !== undefined
+        ? data.settings.lateSubmissionWindowDays : fallback.lateSubmissionWindowDays;
+    }
   } catch (err) {
     __rulebookScoringConfig = fallback;
   }
