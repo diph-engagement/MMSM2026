@@ -459,10 +459,10 @@
       </div>
 
       <div id="onboardPdfGate" style="display:none;text-align:center;">
-        <button type="button" class="secondary" id="onboardDownloadBtn">⬇ Download Full Mechanics (PDF)</button>
+        <button type="button" class="secondary" id="onboardDownloadBtn">📖 Open Full Rules &amp; FAQ</button>
         <label class="checkline" style="text-align:left;">
           <input type="checkbox" id="onboardPdfCheck" disabled>
-          I've downloaded and read the Full Mechanics Document
+          I've scrolled through the full Rules &amp; FAQ
         </label>
       </div>
 
@@ -880,25 +880,6 @@
         <button type="button" class="primary" id="sportsSaveBtn">Save List</button>
         <div id="sportsMsg" class="msg"></div>
       </div>
-
-      <button type="button" class="accordion-header" onclick="toggleAccordion('pdf')">
-        <div>
-          <div class="accordion-title">Full Mechanics PDF</div>
-          <div class="accordion-desc">Upload the document teams must read before registering.</div>
-        </div>
-        <svg class="accordion-chevron" id="chevron-pdf" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-      <div class="card accordion-body" id="body-pdf" style="display:none;">
-        <p class="hint" style="margin-top:0;">This is the document teams must download before registering.</p>
-        <p id="currentPdfLabel" style="font-size:13px;font-weight:600;color:var(--ink);">No file uploaded yet.</p>
-        <label class="file-upload-box" for="pdfFileInput" data-default-text="Tap to choose a PDF">
-          <svg class="upload-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
-          <div class="upload-text">Tap to choose a PDF</div>
-          <input type="file" id="pdfFileInput" accept="application/pdf" onchange="updateFileUploadBox(this)">
-        </label>
-        <button type="button" class="primary" id="pdfUploadBtn">Upload PDF</button>
-        <div id="pdfUploadMsg" class="msg"></div>
-      </div>
     </div>
 
     <div id="adminTab-queue" class="subview">
@@ -1011,6 +992,19 @@
     <h3 id="infoModalTitle" style="font-size:16px;margin:0 0 14px;color:var(--ink);"></h3>
     <div id="infoModalBody" style="font-size:13px;color:#444;line-height:1.6;"></div>
     <button type="button" id="infoModalCloseBtn" style="width:100%;margin-top:18px;padding:12px;border-radius:10px;border:none;background:var(--purple);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Close</button>
+  </div>
+</div>
+
+<div id="rulesPreviewOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,0,31,.9);z-index:2500;flex-direction:column;">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:var(--purple);color:#fff;flex-shrink:0;">
+    <strong style="font-size:15px;">Full Rules &amp; FAQ</strong>
+    <button type="button" id="rulesPreviewCloseBtn" style="background:none;border:none;color:#fff;cursor:pointer;display:flex;padding:4px;" aria-label="Close">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div id="rulesPreviewBody" style="flex:1;overflow-y:auto;background:#fff;padding:20px;" onscroll="checkRulesScrollEnd()"></div>
+  <div style="padding:12px 20px;background:#fff;border-top:1px solid #eee;text-align:center;flex-shrink:0;">
+    <p id="rulesScrollHint" class="hint" style="margin:0;">Scroll down to read everything ↓</p>
   </div>
 </div>
 
@@ -1590,8 +1584,6 @@ const ONBOARD_SLIDES = [
 
 let onboardStep = 0;
 let onboardConfirmed = new Array(ONBOARD_SLIDES.length).fill(false);
-let onboardPdfClicked = false;
-let mechanicsPdfUrl = null;
 let onboardingCompletedThisSession = false;
 
 async function initRegisterView() {
@@ -1620,9 +1612,9 @@ async function initRegisterView() {
       document.getElementById('registerClosedMsg').style.display = 'block';
       return;
     }
-    mechanicsPdfUrl = data.success ? data.settings.mechanicsPdfUrl : null;
   } catch (err) {
-    mechanicsPdfUrl = null;
+    // If the settings check fails, fail open rather than stranding the user on a spinner —
+    // worst case they see the onboarding when registration happens to be closed.
   } finally {
     hideLoading();
   }
@@ -1663,14 +1655,11 @@ function renderOnboardStep() {
   } else {
     document.getElementById('onboardIconWrap').innerHTML = ICON_AGREEMENT.replace(/#5000B3/g, '#FF6300').replace(/#FF6300/g,'#5000B3');
     document.getElementById('onboardTitle').textContent = 'One Last Thing';
-    document.getElementById('onboardText').textContent = mechanicsPdfUrl
-      ? 'Download and keep a copy of the full Mechanics document before you register.'
-      : 'The full Mechanics document isn\'t uploaded yet — check back soon.';
+    document.getElementById('onboardText').textContent = 'Scroll through the full Rules & FAQ before you register — it only takes a minute.';
     document.getElementById('onboardConfirmRow').style.display = 'none';
     document.getElementById('onboardPdfGate').style.display = 'block';
-    document.getElementById('onboardDownloadBtn').disabled = !mechanicsPdfUrl;
     const pdfCheck = document.getElementById('onboardPdfCheck');
-    pdfCheck.disabled = !onboardPdfClicked;
+    pdfCheck.disabled = !hasScrolledToRulesEnd;
     document.getElementById('onboardNextBtn').textContent = 'Continue to Registration';
     document.getElementById('onboardNextBtn').disabled = !pdfCheck.checked;
   }
@@ -1681,11 +1670,47 @@ document.getElementById('onboardConfirmCheck').addEventListener('change', functi
   document.getElementById('onboardNextBtn').disabled = !this.checked;
 });
 
+let hasScrolledToRulesEnd = false;
+
+async function openRulesPreviewModal() {
+  const overlay = document.getElementById('rulesPreviewOverlay');
+  const body = document.getElementById('rulesPreviewBody');
+  overlay.style.display = 'flex';
+  if (!body.dataset.loaded) {
+    body.innerHTML = '<p class="hint" style="text-align:center;">Loading…</p>';
+    const cfg = await ensureRulebookScoringConfig();
+    const resolvedHtml = t => typeof t.html === 'function' ? t.html(cfg) : t.html;
+    body.innerHTML = RULEBOOK.map(t => `
+      <div style="margin-bottom:26px;">
+        <h3 style="color:var(--purple-deep);font-size:16px;margin:0 0 2px;">${t.title}</h3>
+        ${t.section ? `<p style="font-size:10px;font-weight:700;color:#999;text-transform:uppercase;margin:0 0 10px;">${t.section} of the Mechanics doc</p>` : ''}
+        <div class="rb-body">${resolvedHtml(t)}</div>
+      </div>
+    `).join('') + '<p class="hint" style="text-align:center;padding:10px 0 0;">— End of Rules & FAQ —</p>';
+    body.dataset.loaded = 'true';
+  }
+  checkRulesScrollEnd();
+}
+
+function checkRulesScrollEnd() {
+  const body = document.getElementById('rulesPreviewBody');
+  const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 24;
+  if (atEnd && !hasScrolledToRulesEnd) {
+    hasScrolledToRulesEnd = true;
+    document.getElementById('onboardPdfCheck').disabled = false;
+    const hint = document.getElementById('rulesScrollHint');
+    hint.textContent = "✓ You've reached the end — you can close this and continue.";
+    hint.style.color = '#1a7a3d';
+    hint.style.fontWeight = '700';
+  }
+}
+
+document.getElementById('rulesPreviewCloseBtn').addEventListener('click', function(){
+  document.getElementById('rulesPreviewOverlay').style.display = 'none';
+});
+
 document.getElementById('onboardDownloadBtn').addEventListener('click', function(){
-  if (!mechanicsPdfUrl) return;
-  window.open(mechanicsPdfUrl, '_blank');
-  onboardPdfClicked = true;
-  document.getElementById('onboardPdfCheck').disabled = false;
+  openRulesPreviewModal();
 });
 
 document.getElementById('onboardPdfCheck').addEventListener('change', function(){
@@ -2407,7 +2432,6 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     applySwitchState('swRegistration', data.settings.registrationOpen);
     applySwitchState('swEntries', data.settings.entriesOpen);
     applySwitchState('swLeaderboard', data.settings.leaderboardRevealed);
-    updatePdfLabel(data.settings.mechanicsPdfName, data.settings.mechanicsPdfUrl);
     if (Array.isArray(data.settings.approvedSports)) {
       document.getElementById('sportsInput').value = data.settings.approvedSports.join(', ');
     }
@@ -2632,51 +2656,6 @@ document.getElementById('sportsSaveBtn').addEventListener('click', async functio
   } finally {
     this.disabled = false; this.textContent = 'Save List';
   }
-});
-
-function updatePdfLabel(name, url) {
-  const label = document.getElementById('currentPdfLabel');
-  if (name && url) {
-    label.innerHTML = 'Current file: <a href="' + url + '" target="_blank" style="color:var(--purple);">' + name + '</a>';
-  } else {
-    label.textContent = 'No file uploaded yet.';
-  }
-}
-
-document.getElementById('pdfUploadBtn').addEventListener('click', function(){
-  const fileInput = document.getElementById('pdfFileInput');
-  const msg = document.getElementById('pdfUploadMsg');
-  msg.style.display = 'none';
-  const file = fileInput.files[0];
-  if (!file) { msg.className = 'msg error'; msg.textContent = 'Choose a PDF file first.'; return; }
-  if (file.type !== 'application/pdf') { msg.className = 'msg error'; msg.textContent = 'Please choose a PDF file.'; return; }
-
-  const btn = this;
-  btn.disabled = true; btn.textContent = 'Uploading…';
-  const reader = new FileReader();
-  reader.onload = async function(){
-    const base64 = reader.result.split(',')[1];
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'admin_upload_pdf', adminKey, fileName: file.name, fileData: base64 }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        msg.className = 'msg success'; msg.textContent = 'Uploaded — teams will now see this on the registration gate.';
-        updatePdfLabel(data.fileName, data.url);
-        fileInput.value = '';
-        updateFileUploadBox(fileInput);
-      } else {
-        msg.className = 'msg error'; msg.textContent = data.error || 'Upload failed.';
-      }
-    } catch (err) {
-      msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
-    } finally {
-      btn.disabled = false; btn.textContent = 'Upload PDF';
-    }
-  };
-  reader.readAsDataURL(file);
 });
 
 let allEntriesCache = [];
