@@ -618,6 +618,7 @@
     <div id="lookupResult" style="display:none;">
       <p class="team-title" id="rTeamName"></p>
       <p class="team-sub" id="rTeamLeader"></p>
+      <div id="rLogoSection" style="text-align:center;margin:10px 0;"></div>
       <p id="rRank" style="text-align:center;font-weight:700;color:var(--orange-deep);font-size:15px;margin:8px 0;"></p>
       <div id="rNotices"></div>
       <div class="stat-row">
@@ -695,6 +696,10 @@
       </button>
       <button type="button" class="adminTabBtn" data-tab="leaderboard" title="Leaderboard">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3"/></svg>
+      </button>
+      <button type="button" class="adminTabBtn" data-tab="directory" title="Team Directory" style="position:relative;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span id="directoryTabCount" class="tab-count-badge" style="display:none;"></span>
       </button>
     </div>
 
@@ -903,6 +908,32 @@
       <div class="card" style="margin-top:12px;">
         <div id="adminLeaderboardList"></div>
         <div id="adminLeaderboardMsg" class="msg"></div>
+      </div>
+    </div>
+
+    <div id="adminTab-directory" class="subview">
+      <div class="card">
+        <p class="hint" style="margin-top:0;">A communications-ready view of every team — approve logo submissions here, then export the whole directory as an image or text, same as the Leaderboard.</p>
+        <div id="directoryPendingSection"></div>
+        <div class="team-action-row" style="margin-top:14px;flex-wrap:wrap;">
+          <button type="button" class="primary" id="dirCopyImgBtn" style="flex:2;width:auto;margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            Copy Image
+          </button>
+          <button type="button" class="icon-action-btn info" id="dirDownloadImgBtn" title="Download Image" aria-label="Download Image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          </button>
+          <button type="button" class="icon-action-btn neutral" id="dirCopyBtn" title="Copy as Text" aria-label="Copy as Text">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-3"/><path d="M9 12h6M9 16h6"/></svg>
+          </button>
+        </div>
+        <div id="dirCopyMsg" class="msg"></div>
+        <canvas id="dirCanvas" style="display:none;"></canvas>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div id="directoryList"></div>
+        <div id="directoryMsg" class="msg"></div>
       </div>
     </div>
   </div>
@@ -1246,26 +1277,9 @@ async function renderRulebook() {
   const content = document.getElementById('rulebookContent');
 
   if (!__rulebookScoringConfig) {
-    content.innerHTML = '<p class="hint" style="text-align:center;padding:20px 0;">Loading current rules…</p>';
-    try {
-      const res = await fetch(SCRIPT_URL + '?action=settings');
-      const data = await res.json();
-      __rulebookScoringConfig = (data.success && data.settings.scoring) ? data.settings.scoring : {
-        walkingPerKm: 3, walkingCapKm: 10, walkingCapPoints: 30,
-        runningPerKm: 5, runningCapKm: 15, runningCapPoints: 75, runningWeekendCapKm: 42,
-        cardioPerBlock: 5, cardioCapBlocks: 2, cardioCapPoints: 10,
-        categoryBPoints: 15, dailyPointCap: 100,
-        weeklyMinActivities: 2, weeklyMinPenalty: 20, secondViolationPenalty: 20,
-      };
-    } catch (err) {
-      __rulebookScoringConfig = {
-        walkingPerKm: 3, walkingCapKm: 10, walkingCapPoints: 30,
-        runningPerKm: 5, runningCapKm: 15, runningCapPoints: 75, runningWeekendCapKm: 42,
-        cardioPerBlock: 5, cardioCapBlocks: 2, cardioCapPoints: 10,
-        categoryBPoints: 15, dailyPointCap: 100,
-        weeklyMinActivities: 2, weeklyMinPenalty: 20, secondViolationPenalty: 20,
-      };
-    }
+    showLoading('Loading current rules…');
+    await ensureRulebookScoringConfig();
+    hideLoading();
   }
 
   const resolvedHtml = t => typeof t.html === 'function' ? t.html(__rulebookScoringConfig) : t.html;
@@ -1874,6 +1888,59 @@ document.getElementById('activityType').addEventListener('change', function(){
 });
 document.getElementById('sport').addEventListener('change', refreshSpecialActivityCard);
 
+function renderLogoSection(logoUrl, logoStatus, teamCode) {
+  const el = document.getElementById('rLogoSection');
+  if (logoStatus === 'Approved' && logoUrl) {
+    el.innerHTML = `
+      <div style="width:72px;height:72px;border-radius:50%;margin:0 auto 6px;border:2px solid var(--purple);display:flex;align-items:center;justify-content:center;background:var(--grey-light);">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+      <a href="${logoUrl}" target="_blank" style="font-size:11px;color:var(--purple);font-weight:600;">View team logo ↗</a>
+    `;
+  } else if (logoStatus === 'Pending') {
+    el.innerHTML = `<p class="hint" style="margin:0;">🖼️ Team logo submitted — waiting on admin approval before it shows here.</p>`;
+  } else {
+    el.innerHTML = `
+      <label class="file-upload-box" for="teamLogoInput" data-default-text="Tap to add a team logo (optional)" style="max-width:260px;margin:8px auto 0;">
+        <svg class="upload-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <div class="upload-text">Tap to add a team logo (optional)</div>
+        <input type="file" id="teamLogoInput" accept="image/*" onchange="uploadTeamLogo(this, '${teamCode}')">
+      </label>
+    `;
+  }
+}
+
+async function uploadTeamLogo(input, teamCode) {
+  const file = input.files[0];
+  if (!file) return;
+  const MAX_LOGO_BYTES = 3 * 1024 * 1024;
+  if (file.size > MAX_LOGO_BYTES) {
+    alert('That image is too large — please use one under 3MB.');
+    input.value = '';
+    return;
+  }
+  const box = input.closest('.file-upload-box');
+  const textEl = box.querySelector('.upload-text');
+  textEl.textContent = 'Uploading…';
+  try {
+    const base64Data = await readFileAsBase64(file);
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'upload_team_logo', teamCode, base64Data, mimeType: file.type, originalName: file.name }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      renderLogoSection('', 'Pending', teamCode);
+    } else {
+      alert(data.error || 'Could not upload the logo.');
+      textEl.textContent = box.dataset.defaultText;
+    }
+  } catch (err) {
+    alert('Could not reach the server.');
+    textEl.textContent = box.dataset.defaultText;
+  }
+}
+
 async function refreshSpecialActivityCard() {
   const card = document.getElementById('specialActivityCard');
   const select = document.getElementById('specialActivitySelect');
@@ -2021,6 +2088,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     }
     document.getElementById('rTeamName').textContent = data.team.teamName;
     document.getElementById('rTeamLeader').textContent = 'Team Leader: ' + data.team.teamLeaderName;
+    renderLogoSection(data.team.logoUrl, data.team.logoStatus, code);
     document.getElementById('rRank').textContent = data.rank
       ? ('Ranked #' + data.rank + ' of ' + data.totalTeams + ' teams')
       : (data.eligible === false ? 'Not currently ranked — needs at least 3 active members for the official standings' : '');
@@ -2308,6 +2376,7 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     loadAdminLeaderboard();
     loadViolations();
     loadSpecialActivities();
+    loadDirectory();
   } catch (err) {
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
@@ -3297,6 +3366,186 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
   const lines = items.map(t => `${medal(t.rank)} ${t.teamName} — ${t.points} pts`);
   const text = `🏆 Move More, Score More — ${header}\n\n` + lines.join('\n');
 
+  try {
+    await navigator.clipboard.writeText(text);
+    msg.className = 'msg success'; msg.textContent = 'Copied! Paste it into the DI Page or Teams chat.';
+  } catch (err) {
+    msg.className = 'msg error'; msg.textContent = 'Could not copy automatically — select the text manually.';
+  }
+});
+
+let teamDirectoryCache = [];
+
+async function loadDirectory() {
+  const list = document.getElementById('directoryList');
+  const msg = document.getElementById('directoryMsg');
+  list.innerHTML = '<p class="hint">Loading…</p>'; msg.style.display = 'none';
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=admin_team_directory&adminKey=' + encodeURIComponent(adminKey));
+    const data = await res.json();
+    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    teamDirectoryCache = data.teams;
+    renderPendingLogos();
+    renderDirectory();
+    updateDirectoryTabCount();
+  } catch (err) {
+    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+  }
+}
+
+function updateDirectoryTabCount() {
+  const count = teamDirectoryCache.filter(t => t.logoStatus === 'Pending').length;
+  const badge = document.getElementById('directoryTabCount');
+  if (count > 0) { badge.textContent = count; badge.style.display = 'inline-flex'; }
+  else { badge.style.display = 'none'; }
+}
+
+function renderPendingLogos() {
+  const section = document.getElementById('directoryPendingSection');
+  const pending = teamDirectoryCache.filter(t => t.logoStatus === 'Pending');
+  if (pending.length === 0) { section.innerHTML = ''; return; }
+  section.innerHTML = `
+    <label style="margin-top:0;">Pending Logo Approvals (${pending.length})</label>
+    ${pending.map(t => `
+      <div class="team-card">
+        <div class="head"><strong>${t.teamName}</strong></div>
+        <div class="roster"><a href="${t.logoUrl}" target="_blank">View submitted logo ↗</a></div>
+        <div class="team-action-row" style="margin-top:8px;">
+          <button type="button" class="icon-action-btn approve" title="Approve logo" aria-label="Approve" onclick="reviewTeamLogo('${t.teamName.replace(/'/g, "\\'")}','approve',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+          </button>
+          <button type="button" class="icon-action-btn decline" title="Reject logo" aria-label="Reject" onclick="reviewTeamLogo('${t.teamName.replace(/'/g, "\\'")}','reject',this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+          <span class="hint" style="margin:0;">Approve / Reject</span>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+async function reviewTeamLogo(teamName, decision, btnEl) {
+  btnEl.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_review_logo', adminKey, teamName, decision }),
+    });
+    const data = await res.json();
+    if (data.success) { loadDirectory(); }
+    else { alert(data.error || 'Could not save this decision.'); btnEl.disabled = false; }
+  } catch (err) {
+    alert('Could not reach the server.'); btnEl.disabled = false;
+  }
+}
+
+function renderDirectory() {
+  const list = document.getElementById('directoryList');
+  if (teamDirectoryCache.length === 0) { list.innerHTML = '<p class="hint">No teams registered yet.</p>'; return; }
+  list.innerHTML = teamDirectoryCache.map(t => `
+    <div class="lb-row">
+      <div class="lb-rank" style="background:${t.logoStatus === 'Approved' ? 'var(--purple)' : '#ccc'};">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+      <div class="lb-name">${t.teamName} <span style="font-size:11px;color:#999;">— led by ${t.teamLeaderName}</span></div>
+      <div class="lb-points">${t.memberCount} members</div>
+    </div>
+  `).join('');
+}
+
+function buildDirectoryCanvas(items, headerText) {
+  const canvas = document.getElementById('dirCanvas');
+  const width = 720;
+  const rowHeight = 58;
+  const headerHeight = 140;
+  const footerHeight = 50;
+  const padding = 20;
+  const height = headerHeight + items.length * rowHeight + footerHeight + padding;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+
+  const grad = ctx.createLinearGradient(0, 0, width, 0);
+  grad.addColorStop(0, '#5a1bb8');
+  grad.addColorStop(1, '#3B0086');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, headerHeight);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 30px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.fillText('👥 Move More, Score More', width / 2, 58);
+  ctx.fillStyle = '#FFB27A';
+  ctx.font = '700 20px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.fillText(headerText, width / 2, 92);
+  ctx.fillStyle = 'rgba(255,255,255,.65)';
+  ctx.font = '600 13px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.fillText('SEASON 2 — TEAM DIRECTORY', width / 2, 116);
+
+  items.forEach((t, i) => {
+    const rowY = headerHeight + i * rowHeight;
+    ctx.fillStyle = i % 2 === 0 ? '#F7F6FB' : '#ffffff';
+    ctx.fillRect(0, rowY, width, rowHeight);
+
+    const cy = rowY + rowHeight / 2;
+    ctx.beginPath();
+    ctx.arc(56, cy, 20, 0, Math.PI * 2);
+    ctx.fillStyle = '#5000B3';
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 16px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText((i + 1).toString(), 56, cy + 5);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#181818';
+    ctx.font = '700 18px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText(t.teamName, 92, cy - 3);
+    ctx.fillStyle = '#8c8c96';
+    ctx.font = '500 13px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText('Led by ' + t.teamLeaderName + ' · ' + t.memberCount + ' members', 92, cy + 16);
+    ctx.textAlign = 'center';
+  });
+
+  ctx.fillStyle = '#8c8c96';
+  ctx.font = '500 12px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.fillText('Move More, Score More — Season 2', width / 2, height - 20);
+
+  return canvas;
+}
+
+document.getElementById('dirDownloadImgBtn').addEventListener('click', function(){
+  if (teamDirectoryCache.length === 0) { alert('Nothing to generate yet.'); return; }
+  const canvas = buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams');
+  const link = document.createElement('a');
+  link.download = 'MMSM_Team_Directory.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+
+document.getElementById('dirCopyImgBtn').addEventListener('click', function(){
+  const msg = document.getElementById('dirCopyMsg');
+  msg.style.display = 'none';
+  if (teamDirectoryCache.length === 0) { msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
+  const canvas = buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams');
+  canvas.toBlob(async (blob) => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
+    } catch (err) {
+      msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+    }
+  }, 'image/png');
+});
+
+document.getElementById('dirCopyBtn').addEventListener('click', async function(){
+  const msg = document.getElementById('dirCopyMsg');
+  msg.style.display = 'none';
+  if (teamDirectoryCache.length === 0) { msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
+  const lines = teamDirectoryCache.map((t, i) => `${i+1}. ${t.teamName} — led by ${t.teamLeaderName} (${t.memberCount} members)`);
+  const text = `👥 Move More, Score More — Meet the Teams\n\n` + lines.join('\n');
   try {
     await navigator.clipboard.writeText(text);
     msg.className = 'msg success'; msg.textContent = 'Copied! Paste it into the DI Page or Teams chat.';
