@@ -1577,17 +1577,30 @@ function goHome() { navigate("home"); }
 })();
 
 let loadingDepth = 0;
+let loadingRotateTimer = null;
+
 function showLoading(message) {
   loadingDepth++;
   const overlay = document.getElementById('loadingOverlay');
   const msgEl = overlay.querySelector('p');
-  if (msgEl) msgEl.textContent = message || 'Loading…';
+  clearInterval(loadingRotateTimer);
+  if (Array.isArray(message)) {
+    let i = 0;
+    if (msgEl) msgEl.textContent = message[0];
+    loadingRotateTimer = setInterval(() => {
+      i = (i + 1) % message.length;
+      if (msgEl) msgEl.textContent = message[i];
+    }, 1400);
+  } else {
+    if (msgEl) msgEl.textContent = message || 'Loading…';
+  }
   overlay.style.display = 'flex';
 }
 function hideLoading() {
   loadingDepth = Math.max(0, loadingDepth - 1);
   if (loadingDepth === 0) {
     document.getElementById('loadingOverlay').style.display = 'none';
+    clearInterval(loadingRotateTimer);
   }
 }
 
@@ -1623,7 +1636,7 @@ async function applyHomeCardAvailability() {
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) return;
   const isFirstVisit = !window.__homeCheckedOnce;
   window.__homeCheckedOnce = true;
-  if (isFirstVisit) showLoading('Loading…');
+  if (isFirstVisit) showLoading(['Lacing up…', 'Checking today\'s status…', 'Warming up the leaderboard…', 'Almost ready…']);
   try {
     const res = await fetch(SCRIPT_URL + '?action=settings');
     const data = await res.json();
