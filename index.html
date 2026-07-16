@@ -237,6 +237,14 @@
   .rb-faq strong{ display:block; font-size:12px; color:var(--purple-deep); margin-bottom:4px; }
   .rb-faq p{ margin:0; font-size:12px; color:#555; }
 
+  .first-time-guide{
+    display:flex; align-items:flex-start; gap:10px; background:#eee7fb; border:1px solid #d5c8f2;
+    border-radius:14px; padding:12px 14px; margin-bottom:14px;
+  }
+  .ftg-icon{ font-size:16px; line-height:1; flex-shrink:0; }
+  .ftg-text{ font-size:12.5px; color:var(--purple-deep); line-height:1.5; flex:1; }
+  .ftg-close{ background:none; border:none; cursor:pointer; padding:2px; color:var(--purple); flex-shrink:0; display:flex; }
+
   #assistantFab{
     position:fixed; bottom:22px; right:22px; width:56px; height:56px; border-radius:50%;
     border:none; background:#fff; box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;
@@ -520,6 +528,7 @@
 
     <section id="view-entry" class="view">
   <div class="view-title"><h2>Submit an Entry</h2><p>One submission per activity — submitted by you</p></div>
+  <div id="ftg-entry"></div>
   <div class="card">
     <label>Team Code</label>
     <input type="text" id="entryTeamCode" placeholder="MMSM-XXXXXX" style="text-transform:uppercase;">
@@ -620,6 +629,7 @@
 
     <section id="view-performance" class="view">
   <div class="view-title"><h2>View Team Performance</h2><p>Enter your Team Code to check your score</p></div>
+  <div id="ftg-performance"></div>
   <div class="card">
     <label for="codeInput">Team Code</label>
     <input type="text" id="codeInput" placeholder="MMSM-XXXXXX" style="text-transform:uppercase;">
@@ -672,6 +682,7 @@
 
     <section id="view-leaderboard" class="view">
   <div class="view-title"><h2>Leaderboard</h2><p>Live team rankings</p></div>
+  <div id="ftg-leaderboard"></div>
   <div class="card">
     <div id="leaderboardMsg" class="msg"></div>
     <p class="note" id="leaderboardRevealNote" style="margin-top:0;"></p>
@@ -1553,9 +1564,44 @@ function renderRoute() {
   if (view === "register") initRegisterView();
   if (view === "leaderboard") loadLeaderboard();
   if (view === "rules" && !window.__rulebookRendered) { renderRulebook(); window.__rulebookRendered = true; }
+
+  if (view === "entry") showFirstTimeGuide('entry', 'ftg-entry',
+    "First time here? Pick Category A (solo) or B (team sport), then paste your own Strava link and details — there's no auto-sync, so type the real distance/duration yourself.");
+  if (view === "performance") showFirstTimeGuide('performance', 'ftg-performance',
+    "First time here? Enter your Team Code anytime to see your rank, points, and every entry's status. Tap a teammate's name for their individual activities, or use the chat icon for quick answers.");
+  if (view === "leaderboard") showFirstTimeGuide('leaderboard', 'ftg-leaderboard',
+    "First time here? Rankings are masked in real time — full team names and points are only revealed at official Checkpoints (Day 20, Day 40, Final Tally).");
 }
 window.addEventListener("hashchange", renderRoute);
 document.addEventListener("DOMContentLoaded", renderRoute);
+
+function showFirstTimeGuide(key, containerId, message) {
+  const container = document.getElementById(containerId);
+  if (!container || container.children.length > 0) return; // already shown/dismissed this load
+  let alreadyDismissed = false;
+  try {
+    alreadyDismissed = localStorage.getItem('mmsm_guide_' + key) === 'dismissed';
+  } catch (err) {
+    // localStorage unavailable (e.g. private browsing edge cases) — just show it every time, harmless.
+  }
+  if (alreadyDismissed) return;
+
+  container.innerHTML = `
+    <div class="first-time-guide">
+      <div class="ftg-icon">💡</div>
+      <div class="ftg-text">${message}</div>
+      <button type="button" class="ftg-close" onclick="dismissFirstTimeGuide('${key}', this)" aria-label="Dismiss">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+function dismissFirstTimeGuide(key, btnEl) {
+  try { localStorage.setItem('mmsm_guide_' + key, 'dismissed'); } catch (err) { /* ignore */ }
+  const banner = btnEl.closest('.first-time-guide');
+  if (banner) banner.parentElement.innerHTML = '';
+}
 
 function loadRosterHint() {
   window.__rosterLoaded = true; // placeholder for future autocomplete against the roster endpoint
