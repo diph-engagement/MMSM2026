@@ -217,6 +217,41 @@
   .stat{ background:var(--grey-light); border-radius:12px; padding:12px 6px; text-align:center; }
   .stat .num{ font-size:22px; font-weight:800; color:var(--orange); }
   .stat .lbl{ font-size:10px; font-weight:700; color:var(--orange-deep); text-transform:uppercase; margin-top:2px; }
+
+  /* Score hero — the Team Score view's headline card */
+  .score-hero{
+    position:relative; overflow:hidden; border-radius:20px; padding:26px 20px 22px;
+    background:radial-gradient(circle at 25% -15%, #6a1fd0 0%, #3b0086 50%, #1b0030 100%);
+    text-align:center; box-shadow:0 20px 50px rgba(20,0,40,.35); margin-bottom:14px;
+  }
+  .score-hero .hero-eyebrow{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.65); margin:0 0 6px; }
+  .score-hero .team-title{ color:#fff; }
+  .score-hero .team-sub{ color:rgba(255,255,255,.65); }
+  .score-hero #rLogoSection{ margin:10px 0 !important; }
+  .score-hero #rLogoSection a{ color:rgba(255,255,255,.85) !important; }
+  .score-hero #rLogoSection .hint{ color:rgba(255,255,255,.7) !important; }
+  .score-hero .hero-points-wrap{ margin:14px 0 6px; }
+  .score-hero .hero-points{ font-size:44px; font-weight:800; color:var(--orange); line-height:1; letter-spacing:-.01em; }
+  .score-hero .hero-points-lbl{ font-size:12px; font-weight:700; color:rgba(255,255,255,.55); letter-spacing:.08em; margin-top:2px; }
+  .score-hero #rRank{ display:inline-block; padding:5px 14px; border-radius:20px; background:rgba(255,255,255,.12); }
+
+  .mini-lb-card{ background:#fff; border-radius:16px; padding:16px 16px 6px; box-shadow:0 12px 30px rgba(0,0,0,.12); margin-bottom:14px; }
+  .mini-lb-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .mini-lb-head .title{ font-weight:800; font-size:13px; color:var(--purple-deep); text-transform:uppercase; letter-spacing:.03em; }
+  .mini-lb-head a{ font-size:12px; font-weight:700; color:var(--orange-deep); cursor:pointer; white-space:nowrap; }
+  .mini-lb-note{ font-size:11px; color:#999; margin:0 0 10px; }
+  .mini-lb-row{ display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid #f0f0f0; }
+  .mini-lb-row:last-child{ border-bottom:none; }
+  .mini-lb-row.me{ background:var(--purple); border-radius:10px; padding:9px 10px; margin:2px 0; }
+  .mini-lb-row.me .mini-lb-name, .mini-lb-row.me .mini-lb-points{ color:#fff; }
+  .mini-lb-rank{ width:26px; height:26px; border-radius:50%; background:var(--grey-light); color:var(--purple-deep); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .mini-lb-rank.top1{ background:linear-gradient(135deg,#ffd76a,#e8a415); color:#5a3c00; }
+  .mini-lb-rank.top2{ background:linear-gradient(135deg,#d9d9e3,#a9abb8); color:#3c3d45; }
+  .mini-lb-rank.top3{ background:linear-gradient(135deg,#e0a672,#b9702f); color:#4a2c0d; }
+  .mini-lb-name{ flex:1; font-size:13px; font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mini-lb-points{ font-size:13px; font-weight:700; color:var(--orange-deep); white-space:nowrap; }
+  .mini-lb-divider{ text-align:center; font-size:11px; color:#bbb; letter-spacing:.2em; padding:2px 0; }
+
   .member-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #eee; font-size:13px; }
 
   .member-row-btn{
@@ -675,18 +710,36 @@
     <div id="lookupMsg" class="msg"></div>
 
     <div id="lookupResult" style="display:none;">
-      <p class="team-title" id="rTeamName"></p>
-      <p class="team-sub" id="rTeamLeader"></p>
-      <div id="rLogoSection" style="text-align:center;margin:10px 0;"></div>
-      <p id="rRank" style="text-align:center;font-weight:700;color:var(--orange-deep);font-size:15px;margin:8px 0;"></p>
-      <div id="rNotices"></div>
-      <div class="stat-row">
-        <div class="stat"><div class="num" id="rTotalPoints">0</div><div class="lbl">Points</div></div>
-        <div class="stat"><div class="num" id="rEntryCount">0</div><div class="lbl">Entries</div></div>
-        <div class="stat"><div class="num" id="rPending">0</div><div class="lbl">Pending</div></div>
+      <div class="score-hero">
+        <p class="hero-eyebrow">Your Team Score</p>
+        <p class="team-title" id="rTeamName"></p>
+        <p class="team-sub" id="rTeamLeader"></p>
+        <div id="rLogoSection" style="text-align:center;margin:10px 0;"></div>
+        <div class="hero-points-wrap">
+          <div class="hero-points" id="rTotalPoints">0</div>
+          <div class="hero-points-lbl">POINTS</div>
+        </div>
+        <p id="rRank" style="text-align:center;font-weight:700;color:#fff;font-size:14px;margin:8px 0 0;"></p>
       </div>
-      <div id="rMembers"></div>
-      <p class="note" id="rNote"></p>
+
+      <div class="mini-lb-card" id="miniLbCard" style="display:none;">
+        <div class="mini-lb-head">
+          <span class="title">Standings</span>
+          <a onclick="navigate('leaderboard')">See full leaderboard →</a>
+        </div>
+        <p class="mini-lb-note" id="miniLbNote"></p>
+        <div id="rStandingsPreview"></div>
+      </div>
+
+      <div class="card">
+        <div id="rNotices"></div>
+        <div class="stat-row" style="grid-template-columns:1fr 1fr;">
+          <div class="stat"><div class="num" id="rEntryCount">0</div><div class="lbl">Entries</div></div>
+          <div class="stat"><div class="num" id="rPending">0</div><div class="lbl">Pending</div></div>
+        </div>
+        <div id="rMembers"></div>
+        <p class="note" id="rNote"></p>
+      </div>
     </div>
   </div>
 
@@ -2351,6 +2404,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
   const result = document.getElementById('lookupResult');
   const btn = this;
   msg.style.display = 'none'; result.style.display = 'none';
+  document.getElementById('miniLbCard').style.display = 'none';
 
   if (!code) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Enter your Team Code first.'; return; }
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
@@ -2371,10 +2425,10 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     document.getElementById('rTeamLeader').textContent = 'Team Leader: ' + data.team.teamLeaderName;
     renderLogoSection(data.team.logoUrl, data.team.logoStatus, code);
     document.getElementById('rRank').textContent = data.rank
-      ? ('Ranked #' + data.rank + ' of ' + data.totalTeams + ' teams')
+      ? ('Rank: ' + data.rank + ' of ' + data.totalTeams + ' teams')
       : (data.eligible === false ? 'Not currently ranked — needs at least 3 active members for the official standings' : '');
-    document.getElementById('rRank').style.color = data.rank ? 'var(--orange-deep)' : '#999';
-    document.getElementById('rRank').style.fontSize = data.rank ? '15px' : '12px';
+    document.getElementById('rRank').style.color = data.rank ? '#fff' : 'rgba(255,255,255,.6)';
+    document.getElementById('rRank').style.fontSize = data.rank ? '14px' : '12px';
     const noticesHtml = (data.notices || []).map(n => `
       <div class="notice-card">
         <div class="notice-date">${new Date(n.timestamp).toLocaleDateString()}</div>
@@ -2382,7 +2436,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
       </div>
     `).join('');
     document.getElementById('rNotices').innerHTML = noticesHtml;
-    document.getElementById('rTotalPoints').textContent = data.score.totalPoints;
+    document.getElementById('rTotalPoints').textContent = formatPts(data.score.totalPoints);
     document.getElementById('rEntryCount').textContent = data.score.entryCount;
     document.getElementById('rPending').textContent = data.score.pendingReview;
     document.getElementById('rNote').textContent = data.score.note;
@@ -2402,6 +2456,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
       `;
     }).join('');
     result.style.display = 'block';
+    loadStandingsPreview(data.rank || null, data.team.teamName);
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'Could not reach the server. Check your connection and try again.';
@@ -2560,6 +2615,52 @@ document.getElementById('codeInput').addEventListener('keydown', function(e){
 });
 
 // ============ PUBLIC LEADERBOARD ============
+function formatPts(n) {
+  const num = Number(n) || 0;
+  return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+function medalRankClass(rank) {
+  return rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
+}
+
+function renderMiniLbRow(t, isMe) {
+  return `
+    <div class="mini-lb-row ${isMe ? 'me' : ''}">
+      <div class="mini-lb-rank ${medalRankClass(t.rank)}">${t.rank}</div>
+      <div class="mini-lb-name">${isMe ? 'Our Team' : t.teamName}</div>
+      ${t.points !== null ? `<div class="mini-lb-points">${formatPts(t.points)} pts</div>` : ''}
+    </div>
+  `;
+}
+
+async function loadStandingsPreview(myRank, myTeamName) {
+  const card = document.getElementById('miniLbCard');
+  const noteEl = document.getElementById('miniLbNote');
+  const container = document.getElementById('rStandingsPreview');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=leaderboard');
+    const data = await res.json();
+    if (!data.success || !data.leaderboard || data.leaderboard.length === 0) { card.style.display = 'none'; return; }
+
+    noteEl.textContent = data.revealed
+      ? 'Official standings — confirmed by the People & Culture Team.'
+      : 'Team names are hidden until People & Culture reveals official standings at the next Checkpoint.';
+
+    const top3 = data.leaderboard.filter(t => t.rank <= 3);
+    const mine = myRank ? data.leaderboard.find(t => t.rank === myRank) : null;
+
+    let html = top3.map(t => renderMiniLbRow(t, t.rank === myRank)).join('');
+    if (mine && myRank > 3) {
+      html += '<div class="mini-lb-divider">···</div>' + renderMiniLbRow(mine, true);
+    }
+    container.innerHTML = html;
+    card.style.display = 'block';
+  } catch (err) {
+    card.style.display = 'none';
+  }
+}
+
 async function loadLeaderboard() {
   const msg = document.getElementById('leaderboardMsg');
   const list = document.getElementById('leaderboardList');
@@ -3090,16 +3191,20 @@ function renderViolationsList() {
   }
   const strikeColor = n => n >= 3 ? '#a4292f' : n === 2 ? '#c78a00' : '#666';
   list.innerHTML = items.map(v => `
-    <div class="entry-card">
+    <div class="entry-card" style="${v.voided ? 'opacity:0.55;' : ''}">
       <div class="top-row">
         <div>
           <div class="team">${v.teamName} — ${v.memberName}</div>
           <div class="meta">${new Date(v.timestamp).toLocaleDateString()} · Strike ${v.strikeNumber}</div>
         </div>
-        <span class="badge" style="background:${strikeColor(v.strikeNumber)};color:#fff;">Strike ${v.strikeNumber}</span>
+        <span class="badge" style="background:${v.voided ? '#888' : strikeColor(v.strikeNumber)};color:#fff;">${v.voided ? 'Voided' : 'Strike ' + v.strikeNumber}</span>
       </div>
       <div class="hint" style="margin-top:6px;"><strong>Reason:</strong> ${v.reason}</div>
       <div class="hint" style="margin-top:2px;"><strong>Consequence:</strong> ${v.consequence}</div>
+      ${v.voided
+        ? `<div class="hint" style="margin-top:6px;color:#888;">Voided — no longer counts toward this member's strikes.</div>
+           <div style="margin-top:8px;"><button type="button" class="icon-action-btn neutral" style="width:auto;padding:4px 12px;font-size:12px;" onclick="unvoidViolation('${v.violationId}', this)">Reactivate</button></div>`
+        : `<div style="margin-top:8px;"><button type="button" class="icon-action-btn decline" style="width:auto;padding:4px 12px;font-size:12px;" onclick="voidViolation('${v.violationId}', this)">Void</button></div>`}
     </div>
   `).join('');
 }
@@ -3151,7 +3256,8 @@ function renderQueue(filter) {
   if (capped) items = items.slice(0, RENDER_CAP);
   const STATUS_OPTIONS = ['Auto-Logged', 'Approved', 'Declined', 'Pending Fair Play Spot-Check',
     'Pending Approval — Sport Not Pre-Approved', 'Pending Approval — Late Submission',
-    'Pending Approval — Weekly Minimum Penalty', 'Logged — Attendance Only',
+    'Pending Approval — Weekly Minimum Penalty', 'Pending Approval — 2nd Violation Deduction',
+    'Pending Approval — Member Disqualification', 'Logged — Attendance Only',
     'Flagged — Exceeds Daily Cap', 'Flagged — Unusually Fast Pace', 'Flagged — Duplicate Strava Link',
     'Rejected — Second Category B Session This Day', 'Rejected — Member Disqualified'];
 
@@ -3417,7 +3523,7 @@ async function logViolation(teamName, safeId, btnEl) {
   const memberName = select.options[select.selectedIndex].dataset.name;
   const reason = document.getElementById('violationReason-' + safeId).value.trim();
   if (!reason) { alert('Add a reason before logging this.'); return; }
-  if (!(await customConfirm('Log a violation for ' + memberName + '? This applies a real consequence (warning, point deduction, or disqualification depending on their strike count) and can\'t be undone from here.'))) return;
+  if (!(await customConfirm('Log a violation for ' + memberName + '? Strike 1 is a warning only. Strike 2 (point deduction) and strike 3 (disqualification) are held in the Pending Review queue for a separate admin approval before they take effect.'))) return;
 
   btnEl.disabled = true; btnEl.textContent = 'Logging…';
   try {
@@ -3437,6 +3543,53 @@ async function logViolation(teamName, safeId, btnEl) {
   } catch (err) {
     alert('Could not reach the server.');
     btnEl.disabled = false; btnEl.textContent = 'Log Violation';
+  }
+}
+
+async function voidViolation(violationId, btnEl) {
+  if (!(await customConfirm('Void this violation? It will no longer count toward the member\'s strikes, and any linked deduction or disqualification (pending or already approved) will be reversed.'))) return;
+
+  btnEl.disabled = true; btnEl.textContent = 'Voiding…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_void_violation', adminKey, violationId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadViolations();
+      loadTeams();
+      loadQueue();
+    } else {
+      alert(data.error || 'Could not void this violation.');
+      btnEl.disabled = false; btnEl.textContent = 'Void';
+    }
+  } catch (err) {
+    alert('Could not reach the server.');
+    btnEl.disabled = false; btnEl.textContent = 'Void';
+  }
+}
+
+async function unvoidViolation(violationId, btnEl) {
+  if (!(await customConfirm('Reactivate this violation? It will count toward the member\'s strikes again. Any linked deduction or disqualification is NOT automatically restored — use Edit Entry for that separately, if needed.'))) return;
+
+  btnEl.disabled = true; btnEl.textContent = 'Reactivating…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_unvoid_violation', adminKey, violationId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadViolations();
+      loadTeams();
+    } else {
+      alert(data.error || 'Could not reactivate this violation.');
+      btnEl.disabled = false; btnEl.textContent = 'Reactivate';
+    }
+  } catch (err) {
+    alert('Could not reach the server.');
+    btnEl.disabled = false; btnEl.textContent = 'Reactivate';
   }
 }
 
