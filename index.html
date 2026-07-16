@@ -3280,6 +3280,7 @@ async function loadTeams() {
         <div id="violationPanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
           <label style="margin-top:0;">Member</label>
           <select id="violationMember-${safeId}">
+            <option value="" disabled selected>Select the member…</option>
             ${activeMembers.map(m => `<option value="${m.strava}" data-name="${m.name}">${m.name} (${m.strava})</option>`).join('')}
           </select>
           <label>Reason</label>
@@ -3291,6 +3292,7 @@ async function loadTeams() {
         <div id="replacePanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
           <label style="margin-top:0;">Outgoing Member</label>
           <select id="replaceOld-${safeId}">
+            <option value="" disabled selected>Select the outgoing member…</option>
             ${activeMembers.map(m => `<option value="${m.strava}">${m.name} (${m.strava})</option>`).join('')}
           </select>
           <label>New Member's Full Name</label>
@@ -3353,6 +3355,7 @@ function toggleViolationPanel(safeId) {
 async function logViolation(teamName, safeId, btnEl) {
   const select = document.getElementById('violationMember-' + safeId);
   const memberStrava = select.value;
+  if (!memberStrava) { alert('Select which member this violation applies to first.'); return; }
   const memberName = select.options[select.selectedIndex].dataset.name;
   const reason = document.getElementById('violationReason-' + safeId).value.trim();
   if (!reason) { alert('Add a reason before logging this.'); return; }
@@ -3802,11 +3805,20 @@ async function replaceMember(teamName, safeId, btnEl) {
   const newMemberStrava = document.getElementById('replaceNewStrava-' + safeId).value.trim();
   const newMemberProfileLink = document.getElementById('replaceNewProfile-' + safeId).value.trim();
 
+  if (!oldMemberStrava) {
+    alert('Select which member is being replaced first.');
+    return;
+  }
+  if (!oldMemberStrava) {
+    alert('Select which member is being replaced first.');
+    return;
+  }
   if (!newMemberName || !newMemberStrava || !newMemberProfileLink) {
     alert('Fill in the new member\'s name, Strava name, and profile link.');
     return;
   }
-  if (!(await customConfirm('Replace this member? Your team only gets one substitution for the whole season, and this can\'t be undone.'))) return;
+  const oldMemberLabel = document.getElementById('replaceOld-' + safeId).selectedOptions[0].textContent;
+  if (!(await customConfirm('Replace ' + oldMemberLabel + ' with ' + newMemberName + '? Your team only gets one substitution for the whole season, and this can\'t be undone.'))) return;
 
   btnEl.disabled = true; btnEl.textContent = 'Replacing…';
   try {
