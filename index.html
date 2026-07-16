@@ -2064,7 +2064,7 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
     document.getElementById('entryTeamNameDisplay').textContent = data.team.teamName;
 
     const select = document.getElementById('entryMemberSelect');
-    select.innerHTML = data.team.members
+    select.innerHTML = '<option value="" disabled selected>Select your name…</option>' + data.team.members
       .filter(m => m.name)
       .map(m => `<option value="${m.strava}">${m.name} (${m.strava})</option>`)
       .join('');
