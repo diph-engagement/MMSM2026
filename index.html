@@ -2068,10 +2068,10 @@ async function uploadTeamLogo(input, teamCode) {
   const textEl = box.querySelector('.upload-text');
   textEl.textContent = 'Uploading…';
   try {
-    const base64Data = await readFileAsBase64(file);
+    const fileData = await readFileAsBase64(file);
     const res = await fetch(SCRIPT_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'upload_team_logo', teamCode, base64Data, mimeType: file.type, originalName: file.name }),
+      body: JSON.stringify({ action: 'upload_team_logo', teamCode, base64Data: fileData.data, mimeType: fileData.mimeType, originalName: fileData.name }),
     });
     const data = await res.json();
     if (data.success) {
