@@ -54,6 +54,8 @@
   .topbar{
     display:flex; align-items:center; gap:10px; padding:14px 16px;
     position:sticky; top:0; z-index:10;
+    background:rgba(20,0,31,.35); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(255,255,255,.08);
   }
   .topbar img{ width:34px; height:34px; border-radius:50%; }
   .topbar .title{ color:#fff; font-weight:700; font-size:15px; }
@@ -69,32 +71,55 @@
   .hero-countdown{
     background:linear-gradient(135deg, var(--purple) 0%, var(--purple-deep) 100%);
     border-radius:18px; padding:22px 18px; margin-bottom:18px; text-align:center;
-    box-shadow:0 15px 40px rgba(0,0,0,.35);
+    box-shadow:0 15px 40px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.06) inset;
+    position:relative; overflow:hidden;
   }
-  .hero-countdown .eyebrow{ color:#ffb27a; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+  .hero-countdown::before{
+    content:''; position:absolute; inset:-2px; border-radius:18px; padding:2px;
+    background:linear-gradient(120deg, transparent, rgba(255,178,122,.5), transparent);
+    background-size:200% 200%; animation:cdShimmer 3.5s linear infinite;
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+  }
+  @keyframes cdShimmer{ 0%{ background-position:0% 50%; } 100%{ background-position:200% 50%; } }
+  .hero-countdown .eyebrow{
+    color:#ffb27a; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
   .hero-countdown .milestone-label{ color:#fff; font-weight:700; font-size:15px; margin-bottom:14px; }
-  .hero-countdown .cd-row{ display:flex; justify-content:center; gap:8px; }
+  .hero-countdown .cd-row{ display:flex; align-items:center; justify-content:center; gap:6px; }
 
-  .cd-box{ background:rgba(255,255,255,.14); border-radius:10px; padding:10px 6px; min-width:56px; flex:1; max-width:70px; }
-  .cd-num{ font-size:21px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .cd-box{
+    background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14);
+    border-radius:10px; padding:10px 6px; min-width:52px; flex:1; max-width:66px;
+  }
+  .cd-box.cd-days{ background:rgba(255,178,122,.16); border-color:rgba(255,178,122,.35); min-width:64px; max-width:80px; }
+  .cd-num{ font-size:21px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; text-shadow:0 0 14px rgba(255,178,122,.35); }
+  .cd-box.cd-days .cd-num{ font-size:27px; }
   .cd-unit{ font-size:10px; font-weight:700; color:#ffb27a; text-transform:uppercase; margin-top:2px; }
+  .cd-sep{ color:rgba(255,178,122,.6); font-weight:800; font-size:18px; animation:cdBlink 1s step-start infinite; }
+  .cd-secs-num{ animation:cdPulseNum 1s ease-in-out infinite; display:inline-block; }
+  @keyframes cdPulseNum{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
+  @keyframes cdBlink{ 50%{ opacity:.25; } }
 
   .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .grid-card{
     display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
-    background:#fff; border-radius:16px; padding:20px 10px; box-shadow:0 12px 30px rgba(0,0,0,.22);
-    border:none; cursor:pointer; font-family:inherit;
+    background:rgba(255,255,255,.14); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.22); border-radius:16px; padding:20px 10px;
+    box-shadow:0 8px 32px rgba(0,0,0,.25);
+    cursor:pointer; font-family:inherit;
   }
   .grid-card:active{ transform:scale(.97); }
   .grid-card.closed{ opacity:.45; pointer-events:none; filter:grayscale(60%); }
-  .grid-card.closed p{ color:#a4292f; font-weight:700; }
+  .grid-card.closed p{ color:#ffb3b3; font-weight:700; }
   .grid-card .icon-circle{
     width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center;
   }
   .grid-card .icon-circle.purple{ background:linear-gradient(135deg, var(--purple), var(--purple-deep)); }
   .grid-card .icon-circle.orange{ background:linear-gradient(135deg, var(--orange), var(--orange-deep)); }
-  .grid-card h3{ margin:0; font-size:14px; color:var(--ink); }
-  .grid-card p{ margin:0; font-size:11px; color:#777; line-height:1.3; }
+  .grid-card h3{ margin:0; font-size:14px; color:#fff; }
+  .grid-card p{ margin:0; font-size:11px; color:rgba(255,255,255,.75); line-height:1.3; }
   .grid-card.admin-grid{ background:rgba(255,255,255,.12); box-shadow:none; }
   .grid-card.admin-grid h3, .grid-card.admin-grid p{ color:rgba(255,255,255,.9); }
   .grid-card.admin-grid .icon-circle{ background:rgba(255,255,255,.2); }
@@ -249,7 +274,9 @@
 
   #assistantFab{
     position:fixed; bottom:22px; right:22px; width:56px; height:56px; border-radius:50%;
-    border:none; background:#fff; box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;
+    border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.18);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;
     z-index:500; padding:4px; overflow:hidden;
   }
   #assistantFab img{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
@@ -257,7 +284,9 @@
 
   #assistantPanel{
     position:fixed; bottom:90px; right:16px; left:16px; max-width:380px; margin-left:auto;
-    background:#fff; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.4); z-index:500;
+    background:rgba(30,0,45,.55); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.4); z-index:500;
     display:flex; flex-direction:column; max-height:60vh;
   }
   .assistant-header{
@@ -274,7 +303,7 @@
     font-size:11px; font-weight:600; padding:6px 10px; border-radius:14px; border:1.5px solid #e2e2e2;
     background:#fff; color:#666; cursor:pointer;
   }
-  .assistant-input-row{ display:flex; gap:8px; padding:12px 14px; border-top:1px solid #eee; }
+  .assistant-input-row{ display:flex; gap:8px; padding:12px 14px; border-top:1px solid rgba(255,255,255,.15); }
   .assistant-input-row input{ flex:1; margin:0; padding:10px 12px; font-size:13px; }
   .assistant-input-row button{
     width:40px; height:40px; border-radius:50%; border:none; background:var(--orange); color:#fff;
@@ -379,12 +408,15 @@
       </div>
 
       <div class="hero-countdown" id="countdownCard">
-        <div class="eyebrow" id="countdownLabel">Loading…</div>
+        <div class="eyebrow"><span id="countdownLabel">Loading…</span></div>
         <div class="cd-row">
-          <div class="cd-box"><div class="cd-num" id="cdDays">--</div><div class="cd-unit">Days</div></div>
+          <div class="cd-box cd-days"><div class="cd-num" id="cdDays">--</div><div class="cd-unit">Days</div></div>
+          <div class="cd-sep">:</div>
           <div class="cd-box"><div class="cd-num" id="cdHours">--</div><div class="cd-unit">Hrs</div></div>
+          <div class="cd-sep">:</div>
           <div class="cd-box"><div class="cd-num" id="cdMins">--</div><div class="cd-unit">Min</div></div>
-          <div class="cd-box"><div class="cd-num" id="cdSecs">--</div><div class="cd-unit">Sec</div></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><div class="cd-num cd-secs-num" id="cdSecs">--</div><div class="cd-unit">Sec</div></div>
         </div>
       </div>
 
@@ -394,7 +426,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="6" y="4" width="12" height="16" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 11h6M9 15h4"/></svg>
           </div>
           <h3>Register Team</h3>
-          <p id="cardRegisterSub">One-time sign-up</p>
+          <p id="cardRegisterSub">Build your squad</p>
         </button>
 
         <button class="grid-card" id="cardEntry" onclick="navigate('entry')">
@@ -402,7 +434,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>
           </div>
           <h3>Submit Entry</h3>
-          <p id="cardEntrySub">Log an activity</p>
+          <p id="cardEntrySub">Make it count</p>
         </button>
 
         <button class="grid-card" onclick="navigate('performance')">
@@ -410,7 +442,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M3 20h18" stroke-linecap="round"/></svg>
           </div>
           <h3>Team Score</h3>
-          <p>Check with your code</p>
+          <p>Track your momentum</p>
         </button>
 
         <button class="grid-card" id="cardLeaderboard" onclick="navigate('leaderboard')">
@@ -418,7 +450,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3"/></svg>
           </div>
           <h3>Leaderboard</h3>
-          <p id="cardLeaderboardSub">See the rankings</p>
+          <p id="cardLeaderboardSub">Chase the top spot</p>
         </button>
 
         <button class="grid-card" onclick="navigate('rules')">
@@ -426,7 +458,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
           </div>
           <h3>Rules &amp; FAQ</h3>
-          <p>The full mechanics</p>
+          <p>Know the game plan</p>
         </button>
 
         <button class="grid-card admin-grid" onclick="navigate('admin')">
@@ -434,7 +466,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
           </div>
           <h3>Admin</h3>
-          <p>P&amp;C Team only</p>
+          <p>Command center</p>
         </button>
       </div>
     </section>
@@ -1600,28 +1632,28 @@ async function applyHomeCardAvailability() {
     const regSub = document.getElementById('cardRegisterSub');
     if (data.settings.registrationOpen === false) {
       regCard.classList.add('closed');
-      regSub.textContent = 'Currently closed';
+      regSub.textContent = 'Not recruiting right now';
     } else {
       regCard.classList.remove('closed');
-      regSub.textContent = 'One-time sign-up';
+      regSub.textContent = 'Build your squad';
     }
     const entryCard = document.getElementById('cardEntry');
     const entrySub = document.getElementById('cardEntrySub');
     if (data.settings.entriesOpen === false) {
       entryCard.classList.add('closed');
-      entrySub.textContent = 'Currently closed';
+      entrySub.textContent = 'Taking a rest day';
     } else {
       entryCard.classList.remove('closed');
-      entrySub.textContent = 'Log an activity';
+      entrySub.textContent = 'Make it count';
     }
     const lbCard = document.getElementById('cardLeaderboard');
     const lbSub = document.getElementById('cardLeaderboardSub');
     if (data.settings.leaderboardOpen === false) {
       lbCard.classList.add('closed');
-      lbSub.textContent = 'Currently unavailable';
+      lbSub.textContent = 'Benched for now';
     } else {
       lbCard.classList.remove('closed');
-      lbSub.textContent = 'See the rankings';
+      lbSub.textContent = 'Chase the top spot';
     }
   } catch (err) {
     // If this fails, cards just stay in their default enabled state — not worth blocking the home screen over.
@@ -1886,7 +1918,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e){
   msg.className = 'msg'; msg.style.display = 'none';
 
   if (!document.getElementById('tncAccepted').checked) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'Please confirm your team has read and agreed to the Season 2 Mechanics before registering.';
     return;
   }
@@ -1906,7 +1938,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e){
   };
 
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'This app isn\'t connected to a backend yet — set SCRIPT_URL in the code.';
     return;
   }
@@ -1922,11 +1954,11 @@ document.getElementById('regForm').addEventListener('submit', async function(e){
     if (data.success) {
       showRegConfirmation(payload.teamName, data.teamCode, members);
     } else {
-      msg.className = 'msg error';
+      msg.style.display = ''; msg.className = 'msg error';
       msg.textContent = data.error || 'Something went wrong — please try again.';
     }
   } catch (err) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'Could not reach the server. Check your connection and try again.';
   } finally {
     hideLoading();
@@ -2049,9 +2081,9 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
   found.style.display = 'none';
   entryResolvedTeamName = null;
 
-  if (!code) { msg.className = 'msg error'; msg.textContent = 'Enter your Team Code first.'; return; }
+  if (!code) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Enter your Team Code first.'; return; }
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'This app isn\'t connected to a backend yet — set SCRIPT_URL in the code.';
     return;
   }
@@ -2063,7 +2095,7 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
     const res = await fetch(SCRIPT_URL + '?action=lookup&code=' + encodeURIComponent(code));
     const data = await res.json();
     if (!data.success) {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not find that team.'; return;
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not find that team.'; return;
     }
     entryResolvedTeamName = data.team.teamName;
     document.getElementById('entryTeamNameDisplay').textContent = data.team.teamName;
@@ -2077,7 +2109,7 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
     found.style.display = 'block';
     refreshSpecialActivityCard();
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server. Check your connection and try again.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server. Check your connection and try again.';
   } finally {
     hideLoading();
     btn.disabled = false; btn.textContent = 'Find My Team';
@@ -2196,7 +2228,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
   const teamName = entryResolvedTeamName;
   const stravaName = document.getElementById('entryMemberSelect').value;
   if (!teamName || !stravaName) {
-    msg.className = 'msg error'; msg.textContent = 'Find your team and select your name first.'; return;
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Find your team and select your name first.'; return;
   }
 
   let payload = { action: 'entry', teamName, stravaName, category: entryCategory };
@@ -2217,11 +2249,11 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
     const photo1 = document.getElementById('proofPhoto1').files[0];
     const photo2 = document.getElementById('proofPhoto2').files[0];
     if (!photo1 || !photo2) {
-      msg.className = 'msg error'; msg.textContent = 'Add both a start and end photo before submitting.'; return;
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Add both a start and end photo before submitting.'; return;
     }
     const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
     if (photo1.size > MAX_PHOTO_BYTES || photo2.size > MAX_PHOTO_BYTES) {
-      msg.className = 'msg error'; msg.textContent = 'Each photo needs to be under 8MB — try a lower-resolution photo or screenshot.'; return;
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Each photo needs to be under 8MB — try a lower-resolution photo or screenshot.'; return;
     }
     payload.sport = document.getElementById('sport').value;
     payload.activityDate = document.getElementById('activityDateB').value;
@@ -2234,14 +2266,14 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
       payload.proofPhoto1Data = p1.data; payload.proofPhoto1Type = p1.mimeType; payload.proofPhoto1Name = p1.name;
       payload.proofPhoto2Data = p2.data; payload.proofPhoto2Type = p2.mimeType; payload.proofPhoto2Name = p2.name;
     } catch (err) {
-      msg.className = 'msg error'; msg.textContent = 'Could not read one of your photos — try picking it again.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not read one of your photos — try picking it again.';
       btn.disabled = false; btn.textContent = 'Submit Entry';
       return;
     }
   }
 
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'This app isn\'t connected to a backend yet — set SCRIPT_URL in the code.';
     return;
   }
@@ -2273,11 +2305,11 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
       document.querySelectorAll('#entryForm .file-upload-box input[type="file"]').forEach(updateFileUploadBox);
       refreshSpecialActivityCard();
     } else {
-      msg.className = 'msg error';
+      msg.style.display = ''; msg.className = 'msg error';
       msg.textContent = data.error || 'Something went wrong — please try again.';
     }
   } catch (err) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'Could not reach the server. Check your connection and try again.';
   } finally {
     hideLoading();
@@ -2299,9 +2331,9 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
   const btn = this;
   msg.style.display = 'none'; result.style.display = 'none';
 
-  if (!code) { msg.className = 'msg error'; msg.textContent = 'Enter your Team Code first.'; return; }
+  if (!code) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Enter your Team Code first.'; return; }
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'This app isn\'t connected to a backend yet — set SCRIPT_URL in the code.';
     return;
   }
@@ -2312,7 +2344,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     const res = await fetch(SCRIPT_URL + '?action=lookup&code=' + encodeURIComponent(code));
     const data = await res.json();
     if (!data.success) {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not find that team.'; return;
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not find that team.'; return;
     }
     document.getElementById('rTeamName').textContent = data.team.teamName;
     document.getElementById('rTeamLeader').textContent = 'Team Leader: ' + data.team.teamLeaderName;
@@ -2350,7 +2382,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     }).join('');
     result.style.display = 'block';
   } catch (err) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'Could not reach the server. Check your connection and try again.';
   } finally {
     hideLoading();
@@ -2514,7 +2546,7 @@ async function loadLeaderboard() {
   msg.style.display = 'none';
   list.innerHTML = '<p class="hint">Loading…</p>';
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
-    msg.className = 'msg error';
+    msg.style.display = ''; msg.className = 'msg error';
     msg.textContent = 'This app isn\'t connected to a backend yet — set SCRIPT_URL in the code.';
     list.innerHTML = '';
     return;
@@ -2524,7 +2556,7 @@ async function loadLeaderboard() {
     const res = await fetch(SCRIPT_URL + '?action=leaderboard');
     const data = await res.json();
     if (!data.success) {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not load the leaderboard.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not load the leaderboard.';
       list.innerHTML = '';
       return;
     }
@@ -2544,7 +2576,7 @@ async function loadLeaderboard() {
       </div>
     `).join('');
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   } finally {
     hideLoading();
   }
@@ -2557,9 +2589,9 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
   const pass = document.getElementById('adminPasscode').value.trim();
   const msg = document.getElementById('adminGateMsg');
   msg.style.display = 'none';
-  if (!pass) { msg.className = 'msg error'; msg.textContent = 'Enter the admin passcode.'; return; }
+  if (!pass) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Enter the admin passcode.'; return; }
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
-    msg.className = 'msg error'; msg.textContent = 'This app isn\'t connected to a backend yet.'; return;
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'This app isn\'t connected to a backend yet.'; return;
   }
   this.disabled = true; this.textContent = 'Checking…';
   showLoading('Unlocking admin panel…');
@@ -2567,7 +2599,7 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     const res = await fetch(SCRIPT_URL + '?action=admin_settings&adminKey=' + encodeURIComponent(pass));
     const data = await res.json();
     if (!data.success) {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Incorrect passcode.'; return;
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Incorrect passcode.'; return;
     }
     adminKey = pass;
     document.getElementById('adminGate').style.display = 'none';
@@ -2607,7 +2639,7 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     loadSpecialActivities();
     loadDirectory();
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     hideLoading();
     this.disabled = false; this.textContent = 'Unlock';
@@ -2642,10 +2674,10 @@ async function toggleSetting(key, switchId) {
     if (data.success) {
       applySwitchState(switchId, newValue);
     } else {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not update setting.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not update setting.';
     }
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   }
 }
 document.getElementById('swRegistration').addEventListener('click', () => toggleSetting('registrationOpen', 'swRegistration'));
@@ -2664,7 +2696,7 @@ document.getElementById('regCloseSaveBtn').addEventListener('click', async funct
   const val = document.getElementById('regCloseInput').value;
   const msg = document.getElementById('regCloseMsg');
   msg.style.display = 'none';
-  if (!val) { msg.className = 'msg error'; msg.textContent = 'Pick a date and time first.'; return; }
+  if (!val) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Pick a date and time first.'; return; }
 
   const iso = new Date(val).toISOString();
   this.disabled = true; this.textContent = 'Saving…';
@@ -2675,12 +2707,12 @@ document.getElementById('regCloseSaveBtn').addEventListener('click', async funct
     });
     const data = await res.json();
     if (data.success) {
-      msg.className = 'msg success'; msg.textContent = 'Saved — the home screen countdown will use this once it\'s active.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Saved — the home screen countdown will use this once it\'s active.';
     } else {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
     }
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     this.disabled = false; this.textContent = 'Save Date';
   }
@@ -2699,12 +2731,12 @@ document.getElementById('runWeeklyPenaltyBtn').addEventListener('click', async f
     });
     const data = await res.json();
     if (data.success) {
-      msg.className = 'msg success'; msg.textContent = 'Done — check the Teams tab notices and Entries sheet for any deductions applied.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Done — check the Teams tab notices and Entries sheet for any deductions applied.';
     } else {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not run the check.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not run the check.';
     }
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     this.disabled = false; this.textContent = 'Run Check Now (for testing)';
   }
@@ -2714,7 +2746,7 @@ document.getElementById('lateWindowSaveBtn').addEventListener('click', async fun
   const days = document.getElementById('lateWindowInput').value;
   const msg = document.getElementById('lateWindowMsg');
   msg.style.display = 'none';
-  if (days === '' || Number(days) < 0) { msg.className = 'msg error'; msg.textContent = 'Enter a valid number of days.'; return; }
+  if (days === '' || Number(days) < 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Enter a valid number of days.'; return; }
 
   this.disabled = true; this.textContent = 'Saving…';
   try {
@@ -2724,12 +2756,12 @@ document.getElementById('lateWindowSaveBtn').addEventListener('click', async fun
     });
     const data = await res.json();
     if (data.success) {
-      msg.className = 'msg success'; msg.textContent = 'Saved — applies to new submissions from now on.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Saved — applies to new submissions from now on.';
     } else {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
     }
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     this.disabled = false; this.textContent = 'Save Window';
   }
@@ -2750,7 +2782,7 @@ document.getElementById('scoringRulesSaveBtn').addEventListener('click', async f
   for (const [key, id] of Object.entries(fields)) {
     const val = document.getElementById(id).value;
     if (val === '' || Number(val) < 0) {
-      msg.className = 'msg error'; msg.textContent = 'Every field needs a valid, non-negative number.'; return;
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Every field needs a valid, non-negative number.'; return;
     }
     payload[key] = Number(val);
   }
@@ -2765,12 +2797,12 @@ document.getElementById('scoringRulesSaveBtn').addEventListener('click', async f
     });
     const data = await res.json();
     if (data.success) {
-      msg.className = 'msg success'; msg.textContent = 'Saved — applies to new submissions from now on.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Saved — applies to new submissions from now on.';
     } else {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
     }
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     this.disabled = false; this.textContent = 'Save Scoring Rules';
   }
@@ -2781,7 +2813,7 @@ document.getElementById('sportsSaveBtn').addEventListener('click', async functio
   const msg = document.getElementById('sportsMsg');
   msg.style.display = 'none';
   const sports = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
-  if (sports.length === 0) { msg.className = 'msg error'; msg.textContent = 'Add at least one sport.'; return; }
+  if (sports.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Add at least one sport.'; return; }
 
   this.disabled = true; this.textContent = 'Saving…';
   try {
@@ -2791,13 +2823,13 @@ document.getElementById('sportsSaveBtn').addEventListener('click', async functio
     });
     const data = await res.json();
     if (data.success) {
-      msg.className = 'msg success'; msg.textContent = 'Saved — the entry form will use this list from now on.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Saved — the entry form will use this list from now on.';
       document.getElementById('sportsInput').value = data.approvedSports.join(', ');
     } else {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
     }
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     this.disabled = false; this.textContent = 'Save List';
   }
@@ -2830,7 +2862,7 @@ async function loadSpecialActivities() {
   try {
     const res = await fetch(SCRIPT_URL + '?action=admin_special_activities&adminKey=' + encodeURIComponent(adminKey));
     const data = await res.json();
-    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     if (data.tags.length === 0) { list.innerHTML = '<p class="hint">No special activities created yet.</p>'; return; }
     const today = new Date().toISOString().slice(0, 10);
     const APPLIES_TO_OPTIONS = [
@@ -2896,7 +2928,7 @@ async function loadSpecialActivities() {
       `;
     }).join('');
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
 }
 
@@ -2972,7 +3004,7 @@ document.getElementById('createTagBtn').addEventListener('click', async function
   msg.style.display = 'none';
 
   if (!tagName || !boostValue) {
-    msg.className = 'msg error'; msg.textContent = 'Tag name and a boost value are required.'; return;
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Tag name and a boost value are required.'; return;
   }
 
   this.disabled = true; this.textContent = 'Creating…';
@@ -2983,16 +3015,16 @@ document.getElementById('createTagBtn').addEventListener('click', async function
     });
     const data = await res.json();
     if (data.success) {
-      msg.className = 'msg success'; msg.textContent = 'Created — it\'s live in the entry form for matching activities.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Created — it\'s live in the entry form for matching activities.';
       document.getElementById('newTagName').value = '';
       document.getElementById('newTagBoostValue').value = '';
       document.getElementById('newTagExpiration').value = '';
       loadSpecialActivities();
     } else {
-      msg.className = 'msg error'; msg.textContent = data.error || 'Could not create this tag.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not create this tag.';
     }
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     this.disabled = false; this.textContent = 'Create Tag';
   }
@@ -3005,12 +3037,12 @@ async function loadViolations() {
   try {
     const res = await fetch(SCRIPT_URL + '?action=admin_violations&adminKey=' + encodeURIComponent(adminKey));
     const data = await res.json();
-    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     allViolationsCache = data.violations;
     renderViolationsList();
     updateViolationsTabCount();
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
 }
 
@@ -3058,12 +3090,12 @@ async function loadQueue(filter) {
   try {
     const res = await fetch(SCRIPT_URL + '?action=admin_entries&adminKey=' + encodeURIComponent(adminKey));
     const data = await res.json();
-    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     allEntriesCache = data.entries;
     renderQueue(filter || 'needs-review');
     updateQueueTabCount();
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
 }
 
@@ -3223,7 +3255,7 @@ async function loadTeams() {
   try {
     const res = await fetch(SCRIPT_URL + '?action=admin_teams&adminKey=' + encodeURIComponent(adminKey));
     const data = await res.json();
-    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     list.innerHTML = data.teams.map(t => {
       const safeId = t.teamName.replace(/[^a-zA-Z0-9]/g, '');
       const teamNameEsc = t.teamName.replace(/'/g, "\\'");
@@ -3340,7 +3372,7 @@ async function loadTeams() {
     `;
     }).join('');
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
 }
 
@@ -3400,11 +3432,11 @@ async function loadAdminLeaderboard() {
     if (currentCheckpointCutoff) url += '&asOf=' + encodeURIComponent(currentCheckpointCutoff);
     const res = await fetch(url);
     const data = await res.json();
-    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     adminLeaderboardCache = data.leaderboard;
     renderAdminLeaderboard(document.querySelector('.lbFilterBtn.active')?.dataset.filter || 'all');
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
 }
 
@@ -3536,15 +3568,15 @@ document.getElementById('lbCopyImgBtn').addEventListener('click', function(){
   const msg = document.getElementById('lbCopyMsg');
   msg.style.display = 'none';
   const items = getFilteredLeaderboardItems();
-  if (items.length === 0) { msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
+  if (items.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
   const header = document.getElementById('lbHeaderInput').value.trim() || 'Official Standings';
   const canvas = buildLeaderboardCanvas(items, header);
   canvas.toBlob(async (blob) => {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
     } catch (err) {
-      msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
     }
   }, 'image/png');
 });
@@ -3554,7 +3586,7 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
   msg.style.display = 'none';
   const items = getFilteredLeaderboardItems();
   if (items.length === 0) {
-    msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return;
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return;
   }
   const header = document.getElementById('lbHeaderInput').value.trim() || 'Official Standings';
   const medal = r => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : (r + '.');
@@ -3563,9 +3595,9 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
 
   try {
     await navigator.clipboard.writeText(text);
-    msg.className = 'msg success'; msg.textContent = 'Copied! Paste it into the DI Page or Teams chat.';
+    msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Copied! Paste it into the DI Page or Teams chat.';
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not copy automatically — select the text manually.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not copy automatically — select the text manually.';
   }
 });
 
@@ -3578,13 +3610,13 @@ async function loadDirectory() {
   try {
     const res = await fetch(SCRIPT_URL + '?action=admin_team_directory&adminKey=' + encodeURIComponent(adminKey));
     const data = await res.json();
-    if (!data.success) { msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     teamDirectoryCache = data.teams;
     renderPendingLogos();
     renderDirectory();
     updateDirectoryTabCount();
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
 }
 
@@ -3731,14 +3763,14 @@ document.getElementById('dirDownloadImgBtn').addEventListener('click', function(
 document.getElementById('dirCopyImgBtn').addEventListener('click', function(){
   const msg = document.getElementById('dirCopyMsg');
   msg.style.display = 'none';
-  if (teamDirectoryCache.length === 0) { msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
+  if (teamDirectoryCache.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
   const canvas = buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams');
   canvas.toBlob(async (blob) => {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
     } catch (err) {
-      msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
     }
   }, 'image/png');
 });
@@ -3746,14 +3778,14 @@ document.getElementById('dirCopyImgBtn').addEventListener('click', function(){
 document.getElementById('dirCopyBtn').addEventListener('click', async function(){
   const msg = document.getElementById('dirCopyMsg');
   msg.style.display = 'none';
-  if (teamDirectoryCache.length === 0) { msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
+  if (teamDirectoryCache.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
   const lines = teamDirectoryCache.map((t, i) => `${i+1}. ${t.teamName} — led by ${t.teamLeaderName} (${t.memberCount} members)`);
   const text = `👥 Move More, Score More — Meet the Teams\n\n` + lines.join('\n');
   try {
     await navigator.clipboard.writeText(text);
-    msg.className = 'msg success'; msg.textContent = 'Copied! Paste it into the DI Page or Teams chat.';
+    msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Copied! Paste it into the DI Page or Teams chat.';
   } catch (err) {
-    msg.className = 'msg error'; msg.textContent = 'Could not copy automatically — select the text manually.';
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not copy automatically — select the text manually.';
   }
 });
 
