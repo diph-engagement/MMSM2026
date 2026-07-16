@@ -21,8 +21,22 @@
       url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MiIgaGVpZ2h0PSI3MiIgdmlld0JveD0iMCAwIDcyIDcyIj4KPGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjEuNiIgZmlsbD0iI0ZGNjMwMCIgb3BhY2l0eT0iMC4xMCIvPgo8Y2lyY2xlIGN4PSIyNiIgY3k9IjE0IiByPSIxIiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA3Ii8+CjxjaXJjbGUgY3g9IjQ0IiBjeT0iNiIgcj0iMS4zIiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA4Ii8+CjxjaXJjbGUgY3g9IjYyIiBjeT0iMTYiIHI9IjEiIGZpbGw9IiNGRjYzMDAiIG9wYWNpdHk9IjAuMDYiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIzMCIgcj0iMS4xIiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA3Ii8+CjxjaXJjbGUgY3g9IjM2IiBjeT0iMjQiIHI9IjEuNSIgZmlsbD0iI0ZGNjMwMCIgb3BhY2l0eT0iMC4wOSIvPgo8Y2lyY2xlIGN4PSI1NiIgY3k9IjM0IiByPSIxIiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA2Ii8+CjxjaXJjbGUgY3g9IjYiIGN5PSI0OCIgcj0iMS4yIiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA4Ii8+CjxjaXJjbGUgY3g9IjI4IiBjeT0iNDQiIHI9IjEiIGZpbGw9IiNGRjYzMDAiIG9wYWNpdHk9IjAuMDYiLz4KPGNpcmNsZSBjeD0iNDgiIGN5PSI1MCIgcj0iMS40IiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA5Ii8+CjxjaXJjbGUgY3g9IjY2IiBjeT0iNDQiIHI9IjEiIGZpbGw9IiNGRjYzMDAiIG9wYWNpdHk9IjAuMDciLz4KPGNpcmNsZSBjeD0iMTQiIGN5PSI2NCIgcj0iMS4zIiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA4Ii8+CjxjaXJjbGUgY3g9IjM4IiBjeT0iNjYiIHI9IjEiIGZpbGw9IiNGRjYzMDAiIG9wYWNpdHk9IjAuMDYiLz4KPGNpcmNsZSBjeD0iNTgiIGN5PSI2MiIgcj0iMS4yIiBmaWxsPSIjRkY2MzAwIiBvcGFjaXR5PSIwLjA3Ii8+Cjwvc3ZnPg==") repeat,
       radial-gradient(circle at 20% -10%, #6a1fd0 0%, #2d0060 45%, #14001f 100%);
     min-height:100vh;
+    position:relative;
   }
-  .app{ max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; transition:max-width .15s; }
+  .bg-orbs{ position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none; }
+  .bg-orb{ position:absolute; border-radius:50%; filter:blur(50px); }
+  .bg-orb-1{ width:280px; height:280px; background:#FF6300; opacity:.20; top:-90px; left:-70px; animation:orbFloat1 55s ease-in-out infinite; }
+  .bg-orb-2{ width:340px; height:340px; background:#9b4dff; opacity:.18; bottom:-120px; right:-100px; animation:orbFloat2 70s ease-in-out infinite; }
+  .bg-orb-3{ width:220px; height:220px; background:#FF6300; opacity:.14; top:38%; right:-90px; animation:orbFloat3 48s ease-in-out infinite; }
+  .bg-orb-4{ width:180px; height:180px; background:#7a2fd6; opacity:.16; bottom:22%; left:-70px; animation:orbFloat4 62s ease-in-out infinite; }
+  @keyframes orbFloat1{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(50px,70px); } }
+  @keyframes orbFloat2{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-60px,-50px); } }
+  @keyframes orbFloat3{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-40px,60px); } }
+  @keyframes orbFloat4{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(45px,-40px); } }
+  @media (prefers-reduced-motion: reduce){
+    .bg-orb{ animation:none; }
+  }
+  .app{ max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; transition:max-width .15s; position:relative; z-index:1; }
   .app.admin-wide{ max-width:1080px; }
 
   @media (min-width:900px){
@@ -80,14 +94,14 @@
   .grid-card h3{ margin:0; font-size:14px; color:var(--ink); }
   .grid-card p{ margin:0; font-size:11px; color:#777; line-height:1.3; }
   .grid-card.admin-grid{ background:rgba(255,255,255,.12); box-shadow:none; }
-  .grid-card.admin-grid h3, .grid-card.admin-grid p{ color:#e8dcfa; }
+  .grid-card.admin-grid h3, .grid-card.admin-grid p{ color:rgba(255,255,255,.9); }
   .grid-card.admin-grid .icon-circle{ background:rgba(255,255,255,.2); }
 
 
   .card{ background:#fff; border-radius:18px; padding:24px 22px; box-shadow:0 20px 50px rgba(0,0,0,.3); }
   .view-title{ text-align:center; margin-bottom:16px; }
   .view-title h2{ color:#fff; font-size:20px; margin:0 0 4px; }
-  .view-title p{ color:#d8c6f5; font-size:13px; margin:0; }
+  .view-title p{ color:rgba(255,255,255,.78); font-size:13px; margin:0; }
 
   .section-label{
     font-weight:700; color:var(--purple); font-size:13px; text-transform:uppercase; letter-spacing:.04em;
@@ -191,6 +205,60 @@
   .status-dot.declined{ background:#f0f0f0; color:#888; }
 
   .pulsing-logo{ width:72px; height:72px; border-radius:50%; animation:logoPulse 1.1s ease-in-out infinite; }
+
+  .rb-body{ font-size:13px; color:#333; line-height:1.6; }
+  .rb-body p{ margin:0 0 10px; }
+  .rb-body ul, .rb-body ol{ margin:0 0 10px; padding-left:20px; }
+  .rb-body li{ margin-bottom:6px; }
+  .rb-sub{ font-weight:700; color:var(--purple); font-size:12px; text-transform:uppercase; letter-spacing:.02em; margin:14px 0 8px; }
+  .rb-sub:first-child{ margin-top:0; }
+  .rb-note{ background:#fff3cd; border-left:3px solid #c78a00; border-radius:8px; padding:8px 10px; font-size:12px; color:#8a6d00; margin:0 0 10px; }
+  .rb-term{ padding:8px 0; border-bottom:1px solid #f0f0f0; font-size:13px; }
+  .rb-term:last-child{ border-bottom:none; }
+  .rb-table{ border:1px solid #eee; border-radius:8px; overflow:hidden; margin-bottom:10px; }
+  .rb-table-row{ display:flex; justify-content:space-between; gap:8px; padding:8px 10px; font-size:12px; border-bottom:1px solid #f0f0f0; }
+  .rb-table-row span{ flex:1; text-align:center; }
+  .rb-table-row span:first-child{ flex:1.6; text-align:left; }
+  .rb-table-row:last-child{ border-bottom:none; }
+  .rb-table-head{ background:var(--purple); color:#fff; font-weight:700; font-size:11px; text-transform:uppercase; }
+  .rb-faq{ padding:10px 0; border-bottom:1px solid #f0f0f0; }
+  .rb-faq:last-child{ border-bottom:none; }
+  .rb-faq strong{ display:block; font-size:12px; color:var(--purple-deep); margin-bottom:4px; }
+  .rb-faq p{ margin:0; font-size:12px; color:#555; }
+
+  #assistantFab{
+    position:fixed; bottom:22px; right:22px; width:56px; height:56px; border-radius:50%;
+    border:none; background:#fff; box-shadow:0 8px 24px rgba(0,0,0,.35); cursor:pointer;
+    z-index:500; padding:4px; overflow:hidden;
+  }
+  #assistantFab img{ width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  #assistantFab:active{ transform:scale(.94); }
+
+  #assistantPanel{
+    position:fixed; bottom:90px; right:16px; left:16px; max-width:380px; margin-left:auto;
+    background:#fff; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.4); z-index:500;
+    display:flex; flex-direction:column; max-height:60vh;
+  }
+  .assistant-header{
+    display:flex; justify-content:space-between; align-items:center; padding:14px 16px;
+    background:var(--purple); color:#fff; border-radius:18px 18px 0 0; font-size:13px; font-weight:700;
+  }
+  .assistant-header button{ background:none; border:none; color:#fff; cursor:pointer; display:flex; padding:0; }
+  .assistant-messages{ flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; min-height:120px; }
+  .assistant-bubble{ font-size:13px; line-height:1.5; padding:10px 12px; border-radius:14px; max-width:85%; }
+  .assistant-bubble.bot{ background:var(--grey-light); color:var(--ink); align-self:flex-start; border-bottom-left-radius:4px; }
+  .assistant-bubble.user{ background:var(--orange); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+  .assistant-chips{ display:flex; gap:6px; padding:0 16px 10px; flex-wrap:wrap; }
+  .assistant-chips button{
+    font-size:11px; font-weight:600; padding:6px 10px; border-radius:14px; border:1.5px solid #e2e2e2;
+    background:#fff; color:#666; cursor:pointer;
+  }
+  .assistant-input-row{ display:flex; gap:8px; padding:12px 14px; border-top:1px solid #eee; }
+  .assistant-input-row input{ flex:1; margin:0; padding:10px 12px; font-size:13px; }
+  .assistant-input-row button{
+    width:40px; height:40px; border-radius:50%; border:none; background:var(--orange); color:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
   @keyframes logoPulse{ 0%,100%{ transform:scale(1); opacity:.7; } 50%{ transform:scale(1.12); opacity:1; } }
 
   .lb-row{ display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid #eee; }
@@ -202,7 +270,7 @@
   .member-row:last-child{ border-bottom:none; }
   .note{ font-size:12px; color:var(--grey-mid); margin-top:12px; font-style:italic; }
 
-  .notice-card{ background:#fff3cd; border-left:3px solid #e0a800; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:12px; color:#6b5300; }
+  .notice-card{ background:#fff3cd; border-left:3px solid #c78a00; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:12px; color:#8a6d00; }
   .notice-card .notice-date{ font-size:10px; font-weight:700; text-transform:uppercase; opacity:.7; margin-bottom:3px; }
   .admin-note-card{ background:#eef1ff; border-left:3px solid #5000B3; border-radius:6px; padding:8px 10px; margin-top:6px; font-size:11px; color:#2c2565; }
   .team-title{ font-size:18px; font-weight:800; color:var(--purple-deep); margin:0 0 2px; }
@@ -268,6 +336,12 @@
 </style>
 </head>
 <body>
+<div class="bg-orbs" aria-hidden="true">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+  <div class="bg-orb bg-orb-4"></div>
+</div>
 <div class="app">
   <div class="topbar">
     <button class="backbtn" id="backBtn" style="display:none;" onclick="goHome()">←</button>
@@ -280,7 +354,7 @@
     <!-- HOME -->
     <section id="view-home" class="view active">
       <div style="text-align:center;padding:6px 0 14px;" id="homeLogoWrap">
-        <p style="color:#d8c6f5;font-size:13px;margin:8px 0 0;">What do you need today?</p>
+        <p style="color:rgba(255,255,255,.78);font-size:13px;margin:8px 0 0;">What do you need today?</p>
       </div>
 
       <div class="hero-countdown" id="countdownCard">
@@ -326,7 +400,15 @@
           <p>See the rankings</p>
         </button>
 
-        <button class="grid-card admin-grid" style="grid-column:1/-1;" onclick="navigate('admin')">
+        <button class="grid-card" onclick="navigate('rules')">
+          <div class="icon-circle purple">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </div>
+          <h3>Rules &amp; FAQ</h3>
+          <p>The full mechanics</p>
+        </button>
+
+        <button class="grid-card admin-grid" onclick="navigate('admin')">
           <div class="icon-circle">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
           </div>
@@ -337,6 +419,15 @@
     </section>
 
     <!-- Views injected below -->
+    <section id="view-rules" class="view">
+      <div class="view-title"><h2>Rules &amp; FAQ</h2><p>Search or tap a topic — same rules as the full Mechanics document</p></div>
+      <div class="card">
+        <input type="text" id="rulesSearchInput" placeholder="Search rules, e.g. 'daily cap' or 'late submission'..." oninput="renderRulebook()">
+        <div id="rulesTopicPills" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;"></div>
+      </div>
+      <div id="rulebookContent" style="margin-top:14px;"></div>
+    </section>
+
     <section id="view-register" class="view">
   <div id="registerClosedMsg" class="card" style="display:none;text-align:center;">
     <p style="font-size:15px;font-weight:700;color:#a4292f;margin:0 0 6px;">Registration is currently closed</p>
@@ -538,6 +629,33 @@
       <p class="note" id="rNote"></p>
     </div>
   </div>
+
+  <button type="button" id="assistantFab" style="display:none;" onclick="toggleAssistant()" aria-label="Ask a question">
+    <img src="" alt="" id="assistantFabImg">
+  </button>
+
+  <div id="assistantPanel" style="display:none;">
+    <div class="assistant-header">
+      <span>Ask about your team or the rules</span>
+      <button type="button" onclick="toggleAssistant()" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="assistant-messages" id="assistantMessages">
+      <div class="assistant-bubble bot">Hi! I can tell you your team's rank and points, explain why a specific entry scored what it did, or answer a rules question. What do you need?</div>
+    </div>
+    <div class="assistant-chips" id="assistantChips">
+      <button type="button" onclick="askAssistant('What is our rank?')">What's our rank?</button>
+      <button type="button" onclick="askAssistant('How many entries are pending?')">Pending entries?</button>
+      <button type="button" onclick="askAssistant('What is the daily point cap?')">Daily cap?</button>
+    </div>
+    <div class="assistant-input-row">
+      <input type="text" id="assistantInput" placeholder="Type your question...">
+      <button type="button" onclick="submitAssistantInput()" aria-label="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+      </button>
+    </div>
+  </div>
 </section>
 
     <section id="view-leaderboard" class="view">
@@ -611,6 +729,45 @@
         <p class="hint" style="margin-top:0;">Runs automatically every Monday morning, checking the week that just closed. Any team with an active member who logged fewer than 2 activities gets a -20 point deduction <strong>held pending your approval</strong> in the Review Queue (Section 7.1) — it won't count, and the team won't be notified, until you approve it there. Idempotent — running it again for a week already checked does nothing.</p>
         <button type="button" class="secondary" id="runWeeklyPenaltyBtn">Run Check Now (for testing)</button>
         <div id="weeklyPenaltyMsg" class="msg"></div>
+      </div>
+
+      <div class="section-label">Scoring Rules</div>
+      <div class="card">
+        <p class="hint" style="margin-top:0;">These control the actual scoring math — changing them takes effect on the <strong>next</strong> entry submitted, not retroactively. The Rules &amp; FAQ page shown to participants automatically reflects whatever you save here.</p>
+
+        <p class="rb-sub" style="margin-top:0;">Category A — Solo Activities</p>
+        <div class="row2">
+          <div><label style="margin-top:0;">Walking pts/km</label><input type="number" step="0.1" id="scoreWalkingPerKm"></div>
+          <div><label style="margin-top:0;">Walking daily cap (km)</label><input type="number" step="0.1" id="scoreWalkingCapKm"></div>
+        </div>
+        <div class="row2">
+          <div><label>Running pts/km</label><input type="number" step="0.1" id="scoreRunningPerKm"></div>
+          <div><label>Running daily cap (km)</label><input type="number" step="0.1" id="scoreRunningCapKm"></div>
+        </div>
+        <label>Running weekend cap (km)</label>
+        <input type="number" step="0.1" id="scoreRunningWeekendCapKm">
+        <p class="hint" style="margin-top:4px;">Applies automatically when the logged activity date is a Saturday or Sunday — covers half/full marathon distances (21-42km) without raising the weekday cap.</p>
+        <div class="row2">
+          <div><label>Solo Cardio pts/30-min block</label><input type="number" step="0.1" id="scoreCardioPerBlock"></div>
+          <div><label>Solo Cardio daily cap (blocks)</label><input type="number" step="1" id="scoreCardioCapBlocks"></div>
+        </div>
+
+        <p class="rb-sub">Category B — Team Sports</p>
+        <label style="margin-top:0;">Flat points per session</label>
+        <input type="number" step="0.1" id="scoreCategoryBPoints">
+
+        <p class="rb-sub">Caps &amp; Accountability</p>
+        <div class="row2">
+          <div><label style="margin-top:0;">Overall daily point cap</label><input type="number" step="1" id="scoreDailyCap"></div>
+          <div><label style="margin-top:0;">Min. activities/week</label><input type="number" step="1" id="scoreWeeklyMin"></div>
+        </div>
+        <div class="row2">
+          <div><label>Weekly shortfall penalty</label><input type="number" step="1" id="scoreWeeklyPenalty"></div>
+          <div><label>2nd-violation penalty</label><input type="number" step="1" id="scoreViolationPenalty"></div>
+        </div>
+
+        <button type="button" class="primary" id="scoringRulesSaveBtn">Save Scoring Rules</button>
+        <div id="scoringRulesMsg" class="msg"></div>
       </div>
 
       <div class="section-label">Late Submission Window</div>
@@ -756,7 +913,7 @@
 </div>
 
 <div id="confirmModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,0,31,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border-radius:16px;padding:24px 22px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);">
+  <div style="background:#fff;border-radius:18px;padding:24px 22px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);">
     <p id="confirmModalMessage" style="font-size:14px;color:var(--ink);line-height:1.5;margin:0 0 20px;"></p>
     <div style="display:flex;gap:10px;">
       <button type="button" id="confirmModalCancelBtn" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid #e2e2e2;background:#fff;color:#555;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Cancel</button>
@@ -766,7 +923,7 @@
 </div>
 
 <div id="infoModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,0,31,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border-radius:16px;padding:22px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);">
+  <div style="background:#fff;border-radius:18px;padding:22px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);">
     <h3 id="infoModalTitle" style="font-size:16px;margin:0 0 14px;color:var(--ink);"></h3>
     <div id="infoModalBody" style="font-size:13px;color:#444;line-height:1.6;"></div>
     <button type="button" id="infoModalCloseBtn" style="width:100%;margin-top:18px;padding:12px;border-radius:10px;border:none;background:var(--purple);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Close</button>
@@ -877,8 +1034,383 @@ const VIEW_TITLES = {
   entry: "Submit an Entry",
   performance: "View Team Performance",
   leaderboard: "Leaderboard",
+  rules: "Rules & FAQ",
   admin: "Admin",
 };
+
+// ============ RULES & FAQ ============
+const RULEBOOK = [
+  { id: 'purpose', title: 'What\'s New', section: 'Section 1', html: `
+    <p>Season 1 taught us three big lessons: our scoring numbers didn't always match across documents, there was no way to check if an activity was real once it was submitted, and one person ended up doing all the manual tracking alone. Season 2 fixes all three — one clear scoring table, phone-tracking rules that can actually be checked, a clear set of warnings and penalties, a separate way to verify team sports, and a set process for where and how entries get saved.</p>
+  `},
+  { id: 'terms', title: 'Key Terms', section: 'Section 2', html: `
+    <div class="rb-term"><strong>LOB</strong> — A department or account at Detector Inspector. This season, teammates don't need to be from the same one.</div>
+    <div class="rb-term"><strong>P&C Team</strong> — The People &amp; Culture Team, running registration, entries, scoring, and disputes.</div>
+    <div class="rb-term"><strong>Declared Strava Name</strong> — The name you choose on Strava, given once at registration. Doesn't need to be your real name, but can't change mid-event.</div>
+    <div class="rb-term"><strong>Strava Profile Link</strong> — Your actual profile link, given at registration alongside your Declared Name — the real identity check, since a display name can be duplicated or mistyped.</div>
+    <div class="rb-term"><strong>Category A</strong> — Solo activities your phone can track (Walking, Running, Solo Cardio Workouts). Points based on distance or time.</div>
+    <div class="rb-term"><strong>Category B</strong> — Team/court sports (basketball, volleyball, badminton, pickleball, football). Fixed points per game, not based on how long you played.</div>
+    <div class="rb-term"><strong>Roster Lock</strong> — The date after which your 5-person team can't change, unless approved.</div>
+    <div class="rb-term"><strong>Snapshot</strong> — A casual weekly score update. Not official, just catches mistakes early.</div>
+    <div class="rb-term"><strong>Checkpoint</strong> — An official scoring date — Day 20, Day 40, Day 60 — used for the official standings.</div>
+    <div class="rb-term"><strong>Late Submission Window</strong> — Days you have after doing an activity to log it (3 by default). Later than that, it's held at 0 points until approved.</div>
+    <div class="rb-term"><strong>Warning Steps</strong> — The 3-step system for rule breaks: warning, then point deduction, then losing the ability to earn points.</div>
+    <div class="rb-term"><strong>Fair Play Committee</strong> — A neutral 3-person group that settles disputes or flagged entries.</div>
+  `},
+  { id: 'overview', title: 'Challenge Overview', section: 'Section 3', html: `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+      <div style="background:var(--grey-light);border-radius:10px;padding:10px 6px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--orange-deep);">60</div><div style="font-size:10px;color:#777;">DAYS</div></div>
+      <div style="background:var(--grey-light);border-radius:10px;padding:10px 6px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--purple);">5</div><div style="font-size:10px;color:#777;">PER TEAM</div></div>
+      <div style="background:var(--grey-light);border-radius:10px;padding:10px 6px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--orange-deep);">2</div><div style="font-size:10px;color:#777;">CATEGORIES</div></div>
+      <div style="background:var(--grey-light);border-radius:10px;padding:10px 6px;text-align:center;"><div style="font-size:20px;font-weight:800;color:var(--purple);">3</div><div style="font-size:10px;color:#777;">CHECKPOINTS</div></div>
+    </div>
+    <p><strong>How long it runs:</strong> August 1 – September 29, 2026 (60 days)</p>
+    <p><strong>Official scoring dates:</strong> Day 20 (Aug 20) · Day 40 (Sep 9) · Final Tally (Sep 29)</p>
+    <p><strong>Weekly update:</strong> an informal score update every week too, so mistakes and disputes get caught quickly instead of piling up.</p>
+  `},
+  { id: 'teams', title: 'Team Formation', section: 'Section 4', html: `
+    <p class="rb-sub">Team Composition</p>
+    <ul>
+      <li>Each team has exactly 5 members, from the same department or different ones — mixing is fine.</li>
+      <li>Anyone can join a team regardless of department, as long as the team has exactly 5 members and one Team Leader.</li>
+      <li>You can only be on one team for the whole challenge.</li>
+      <li>A team needs at least 3 active members at all times to stay eligible for the official standings. Below that without an approved replacement, they can keep logging but won't be included.</li>
+    </ul>
+    <p class="rb-sub">Event Registration</p>
+    <p>Before the challenge starts, every team registers once with the People &amp; Culture Team, including team name, all 5 members' names + who's Team Leader, and each member's Declared Strava Name + profile link.</p>
+    <p class="rb-note">Registration is your only chance to declare your Strava name without penalty — declare it now, or your points might not count later.</p>
+    <p class="rb-sub">Roster Lock &amp; Substitution</p>
+    <ul>
+      <li>Teams lock in after Day 3 (Aug 3) — no swapping once standings are visible.</li>
+      <li>Exception: extended leave (5+ working days) or leaving the company — replacement needs P&amp;C approval. Old member's points stay on the team's score up to the approval date; new member's points start from that date.</li>
+      <li>If the team would rather continue with 4 members instead, P&amp;C can mark the departing member as Separated — excludes them from the weekly minimum check without using up the substitution.</li>
+      <li>Each team gets only one replacement all season.</li>
+      <li>Any unapproved team change doesn't count, and its points are void.</li>
+    </ul>
+  `},
+  { id: 'strava', title: 'Strava Setup', section: 'Section 5.1\u20135.3', html: `
+    <p class="rb-sub">Account &amp; Declared Name Rules</p>
+    <ul>
+      <li>Everyone needs Strava installed — a nickname is fine, real name not required.</li>
+      <li>Declare your name and profile link at registration — this is how activity gets matched to you and your team.</li>
+      <li>You can't change your Strava name once the event starts without telling P&amp;C first.</li>
+      <li>Two people can't share the same Strava name — checked for duplicates at registration.</li>
+      <li>Every team makes one official Strava Club named exactly like the registered Team Name.</li>
+      <li>You must log activities under your own account — using someone else's is treated as faking an entry.</li>
+    </ul>
+    <p class="rb-sub">Visibility &amp; Entry Format</p>
+    <ul>
+      <li>Every activity must be set to "Everyone" as soon as saved — private or delayed-visibility activities earn zero points.</li>
+      <li>Walking/Running need real phone GPS tracking — typed-in distances earn zero points.</li>
+      <li>Each activity is one continuous session — don't combine two walks/runs into one entry.</li>
+      <li>Treadmill sessions have no GPS — log as Solo Cardio Workout instead of Running.</li>
+      <li>Cycling, driving, e-scooters, or anything motor/wheeled doesn't count under any category.</li>
+      <li>Faking GPS location is treated as cheating — goes straight to the 2nd warning step.</li>
+      <li>Deleting/hiding an activity after it's flagged or audited is a rule break too.</li>
+    </ul>
+    <p class="rb-sub">Data &amp; Audit Requirements</p>
+    <ul>
+      <li>Every activity needs the full map, time, and pace/heart rate visible — a distance number alone isn't enough.</li>
+      <li>P&amp;C or the Fair Play Committee can ask for your original screenshot at random. No response within 24 hours means that entry doesn't count.</li>
+    </ul>
+  `},
+  { id: 'submitting', title: 'Submitting Entries', section: 'Section 5.4', html: `
+    <p>All proof goes through one place — the app itself — so P&amp;C can check and score everything the same way.</p>
+    <ul>
+      <li>Submit through the app — one submission per activity. The Team Leader doesn't need to collect anyone's proof by hand.</li>
+      <li>Include: Team Name, your Declared Strava Name, activity, date, Strava screenshot (Category A), or start/end photos + Team Leader confirmation (Category B).</li>
+      <li>Everything is stored in one master log — no separate spreadsheets or chat submissions count.</li>
+      <li>Weekly deadline: Sunday 11:59 PM Philippine Time for that week's informal update.</li>
+      <li><strong>Submit close to the activity date.</strong> Entries logged more than 3 days later are held at 0 points until P&amp;C approves them — this stops old activities from being dumped in right before a Checkpoint to game the leaderboard.</li>
+      <li>The Team Leader's job is double-checking the log for their team, not collecting proof.</li>
+    </ul>
+  `},
+  { id: 'scoring', title: 'Scoring System', section: 'Section 6', html: (cfg) => `
+    <p class="rb-sub">Category A — Solo Activities</p>
+    <div class="rb-table">
+      <div class="rb-table-row rb-table-head"><span>Activity</span><span>Points</span><span>Daily Limit</span><span>Max/Day</span></div>
+      <div class="rb-table-row"><span>Walking</span><span>${cfg.walkingPerKm} pts/km</span><span>${cfg.walkingCapKm} km</span><span>${cfg.walkingCapPoints} pts</span></div>
+      <div class="rb-table-row"><span>Running</span><span>${cfg.runningPerKm} pts/km</span><span>${cfg.runningCapKm} km</span><span>${cfg.runningCapPoints} pts</span></div>
+      <div class="rb-table-row"><span>Solo Cardio Workout</span><span>${cfg.cardioPerBlock} pts/30-min block</span><span>${cfg.cardioCapBlocks} blocks</span><span>${cfg.cardioCapPoints} pts</span></div>
+    </div>
+    <p class="rb-note">Weekend exception: if the activity date is a Saturday or Sunday, Running's daily cap rises to ${cfg.runningWeekendCapKm}km — covering half and full marathon distances (21-42km) run on weekend race days. The weekday cap still applies Monday-Friday.</p>
+    <p class="rb-note">Only full 30-minute blocks count for workouts — a 45-minute session earns one block, not 1.5. Blocks are per-session, not summed across the day.</p>
+    <p class="rb-sub">Category B — Team &amp; Court Sports</p>
+    <ul>
+      <li>Pre-approved: Basketball, Volleyball, Badminton, Pickleball, Football. Any other sport needs P&amp;C approval <em>before</em> you play it, or it earns zero points. Response within 2 business days.</li>
+      <li>Flat ${cfg.categoryBPoints} points per person, once a day, no matter how long the game runs.</li>
+      <li>Only one Category B session counts per person per day, even across multiple sports.</li>
+    </ul>
+    <p class="rb-sub">Proof Required for Category B (all four)</p>
+    <ol>
+      <li>Group photo from the start of the game, at the venue.</li>
+      <li>Group photo or short video from the end of the game.</li>
+      <li>A Strava entry covering the whole time you were there — bench time OK.</li>
+      <li>Your Team Leader confirming you played at least half the game — logging without this earns 0 points, for attendance only.</li>
+    </ol>
+    <p class="rb-note">Photos need a visible date matching the Strava entry's date. Undated or recycled photos earn zero points.</p>
+    <p class="rb-sub">Daily Point Limit</p>
+    <p>No one can earn more than ${cfg.dailyPointCap} points in a single day, across every activity combined. This applies per activity type too — e.g. Walking can't exceed its own ${cfg.walkingCapPoints}-point daily ceiling even if split across multiple entries.</p>
+  `},
+  { id: 'accountability', title: 'Staying Accountable', section: 'Section 7', html: (cfg) => `
+    <p class="rb-sub">Minimum Activity Requirement</p>
+    <ul>
+      <li>Each member logs at least ${cfg.weeklyMinActivities} qualifying activities a week.</li>
+      <li>Missing that minimum costs the team ${cfg.weeklyMinPenalty} points from that week's total.</li>
+    </ul>
+    <p class="rb-sub">Warnings and Penalties</p>
+    <p>Rule breaks include: typing a distance instead of tracking it, hiding your visibility setting, logging the wrong activity type, changing your Strava name without telling us, or missing Category B proof.</p>
+    <p class="rb-note">This list isn't exhaustive — the People &amp; Culture Team may treat other conduct that undermines fair competition as a violation, at their discretion, following the same warning steps below.</p>
+    <ol>
+      <li><strong>First time:</strong> lose points for that one entry, plus a warning on file.</li>
+      <li><strong>Second time:</strong> team loses ${cfg.secondViolationPenalty} points, placed under closer watch.</li>
+      <li><strong>Third time:</strong> can't earn any more points for the rest of the challenge. Teammates keep competing as normal.</li>
+    </ol>
+    <p class="rb-sub">Team Leader's Role</p>
+    <ul>
+      <li>Check your team's entries for accuracy before each weekly update.</li>
+      <li>Flag anything you can't personally vouch for — flagging in good faith never counts against you.</li>
+      <li>If the Team Leader is the one being flagged, any other member can raise it directly with P&amp;C.</li>
+    </ul>
+  `},
+  { id: 'timing', title: 'Scoring Timing', section: 'Section 8', html: `
+    <ul>
+      <li>Weekly update: informal, shared with every team.</li>
+      <li>Official scoring dates: Day 20, Day 40, and the Final Tally on Day 60 — these are the official standings.</li>
+      <li>A masked leaderboard (rankings only, names partly hidden) updates in real time. P&amp;C reveals the full leaderboard, with real names and points, at each official Checkpoint.</li>
+    </ul>
+  `},
+  { id: 'disputes', title: 'Disputes & Tie-Breakers', section: 'Sections 9\u201310', html: `
+    <p class="rb-sub">Settling Disputes</p>
+    <ul>
+      <li>Any team can flag a suspicious entry within 48 hours of an update or scoring date being posted.</li>
+      <li>Flagged entries go to a 3-person Fair Play Committee — one from P&amp;C, plus two rotating members from uninvolved teams.</li>
+      <li>The Committee's decision is final; both teams hear back within 3 business days.</li>
+    </ul>
+    <p class="rb-sub">Tie-Breakers</p>
+    <p>Ties are broken first by total Category A distance logged, then a coin toss by the Fair Play Committee. A team with a disqualified member can still be included in the official standings, as long as at least 3 members remain active.</p>
+  `},
+  { id: 'faq', title: 'FAQ', section: 'Section 11', html: `
+    ${[
+      ["Can I be on a team with people from a different LOB?", "Yes. Teams may be same-LOB or mixed-LOB this season."],
+      ["Do I need to use my real name on Strava?", "No. Use any nickname, but declare it at registration and don't change it mid-event."],
+      ["Why do you need my Strava profile link, not just my display name?", "A display name can be duplicated or mistyped. A profile link points to one specific account — it's what confirms who's who."],
+      ["Can I log an activity using someone else's Strava account?", "No. Doing so is treated as faking an entry."],
+      ["My workout was 45 minutes — why only one block's worth of points?", "Only full 30-minute blocks count. 45 minutes earns one block, not 1.5."],
+      ["I did two 20-minute workouts in one day — do they add up?", "No. Blocks are counted per individual session, not summed across the day."],
+      ["Can I log a treadmill run?", "Yes — log it as a Solo Cardio Workout instead of Running, since treadmills have no GPS."],
+      ["Can I count cycling or driving?", "No. Motor-assisted or wheeled movement isn't eligible under any category."],
+      ["We played basketball then volleyball same day — two Category B sessions?", "No. Only one Category B session counts per person per day."],
+      ["Is basketball the only team sport that counts?", "Basketball, volleyball, badminton, pickleball, and football are pre-approved. Others need P&C sign-off before you play."],
+      ["What if a teammate resigns or goes on leave mid-challenge?", "The Team Leader requests a substitution through P&C (only for 5+ day leave or separation) — one per team all season. Or the departing member can be marked Separated instead."],
+      ["What if our roster drops below 5?", "The team may keep logging, but needs at least 3 active members at Final Tally to remain eligible for the official standings."],
+      ["What if two teams tie at the end?", "Broken first by total Category A distance, then a coin toss by the Fair Play Committee."],
+      ["Can I delete an activity after submitting it?", "Not once it's flagged or audited — deleting it is treated as a violation on its own."],
+      ["What time zone is the weekly deadline in?", "Philippine Time — entries due by 11:59 PM Sunday."],
+      ["I forgot to log an activity from a few days ago — can I still submit it?", "Yes, within 3 days it counts normally. Later than that, it's held at 0 points until P&C approves it."],
+      ["What if my requested sport isn't approved in time?", "P&C responds within 2 business days — submit early, not the day you plan to play."],
+      ["Will our proof photos be shared publicly?", "No — only used to check your entry."],
+      ["What if I need to flag my own Team Leader?", "Any other team member can raise it directly with P&C."],
+      ["I think someone on another team is cheating — what do I do?", "Flag it within 48 hours. The Fair Play Committee reviews within 3 business days."],
+      ["If I'm disqualified after a 3rd violation, do I lose points I already earned?", "No. Points earned before the violation stand — you just stop earning new ones."],
+    ].map(([q,a]) => `<div class="rb-faq"><strong>Q: ${q}</strong><p>${a}</p></div>`).join('')}
+  `},
+  { id: 'fairplay', title: 'Code of Fair Play', section: 'Section 12', html: `
+    <p>This challenge runs on trust first, and double-checking second. Faking an entry doesn't just take points from another team — it takes them from your own teammates who logged their activities honestly. Every rule here exists so the leaderboard shows who actually moved, not who was best at working around the rules.</p>
+  `},
+];
+
+let __rulebookScoringConfig = null;
+
+async function ensureRulebookScoringConfig() {
+  if (__rulebookScoringConfig) return __rulebookScoringConfig;
+  const fallback = {
+    walkingPerKm: 3, walkingCapKm: 10, walkingCapPoints: 30,
+    runningPerKm: 5, runningCapKm: 15, runningCapPoints: 75, runningWeekendCapKm: 42,
+    cardioPerBlock: 5, cardioCapBlocks: 2, cardioCapPoints: 10,
+    categoryBPoints: 15, dailyPointCap: 100,
+    weeklyMinActivities: 2, weeklyMinPenalty: 20, secondViolationPenalty: 20,
+  };
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=settings');
+    const data = await res.json();
+    __rulebookScoringConfig = (data.success && data.settings.scoring) ? data.settings.scoring : fallback;
+  } catch (err) {
+    __rulebookScoringConfig = fallback;
+  }
+  return __rulebookScoringConfig;
+}
+
+async function renderRulebook() {
+  const pills = document.getElementById('rulesTopicPills');
+  const content = document.getElementById('rulebookContent');
+
+  if (!__rulebookScoringConfig) {
+    content.innerHTML = '<p class="hint" style="text-align:center;padding:20px 0;">Loading current rules…</p>';
+    try {
+      const res = await fetch(SCRIPT_URL + '?action=settings');
+      const data = await res.json();
+      __rulebookScoringConfig = (data.success && data.settings.scoring) ? data.settings.scoring : {
+        walkingPerKm: 3, walkingCapKm: 10, walkingCapPoints: 30,
+        runningPerKm: 5, runningCapKm: 15, runningCapPoints: 75, runningWeekendCapKm: 42,
+        cardioPerBlock: 5, cardioCapBlocks: 2, cardioCapPoints: 10,
+        categoryBPoints: 15, dailyPointCap: 100,
+        weeklyMinActivities: 2, weeklyMinPenalty: 20, secondViolationPenalty: 20,
+      };
+    } catch (err) {
+      __rulebookScoringConfig = {
+        walkingPerKm: 3, walkingCapKm: 10, walkingCapPoints: 30,
+        runningPerKm: 5, runningCapKm: 15, runningCapPoints: 75, runningWeekendCapKm: 42,
+        cardioPerBlock: 5, cardioCapBlocks: 2, cardioCapPoints: 10,
+        categoryBPoints: 15, dailyPointCap: 100,
+        weeklyMinActivities: 2, weeklyMinPenalty: 20, secondViolationPenalty: 20,
+      };
+    }
+  }
+
+  const resolvedHtml = t => typeof t.html === 'function' ? t.html(__rulebookScoringConfig) : t.html;
+  const searchTerm = document.getElementById('rulesSearchInput').value.trim().toLowerCase();
+
+  const matches = searchTerm
+    ? RULEBOOK.filter(t => t.title.toLowerCase().includes(searchTerm) || (t.section || '').toLowerCase().includes(searchTerm) || resolvedHtml(t).toLowerCase().includes(searchTerm))
+    : RULEBOOK;
+
+  pills.innerHTML = RULEBOOK.map(t => `
+    <button type="button" onclick="scrollToRulebookTopic('${t.id}')"
+      style="font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px;border:1.5px solid ${matches.includes(t) ? 'var(--purple)' : '#e2e2e2'};background:${matches.includes(t) ? 'var(--purple)' : '#fff'};color:${matches.includes(t) ? '#fff' : '#777'};cursor:pointer;">
+      ${t.title}
+    </button>
+  `).join('');
+
+  if (matches.length === 0) {
+    content.innerHTML = '<p class="hint" style="text-align:center;padding:20px 0;">No matching rules found — try a different search term.</p>';
+    return;
+  }
+
+  content.innerHTML = matches.map(t => `
+    <div class="card rulebook-section" id="rbtopic-${t.id}" style="margin-bottom:12px;">
+      <h3 style="margin:0 0 2px;font-size:15px;color:var(--purple-deep);">${t.title}</h3>
+      ${t.section ? `<p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.03em;">${t.section} of the Mechanics doc</p>` : ''}
+      <div class="rb-body">${resolvedHtml(t)}</div>
+    </div>
+  `).join('');
+}
+
+function scrollToRulebookTopic(id) {
+  const el = document.getElementById('rbtopic-' + id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============ SELF-SERVICE ASSISTANT (Team Performance) ============
+// Answers three kinds of questions using data already on the page — no AI API,
+// no external calls beyond what the page already fetches for the team lookup itself.
+function toggleAssistant() {
+  const panel = document.getElementById('assistantPanel');
+  panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+  if (panel.style.display === 'flex') document.getElementById('assistantInput').focus();
+}
+
+function askAssistant(question) {
+  document.getElementById('assistantInput').value = question;
+  submitAssistantInput();
+}
+
+document.getElementById('assistantInput').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') { e.preventDefault(); submitAssistantInput(); }
+});
+
+function addAssistantBubble(text, who) {
+  const messages = document.getElementById('assistantMessages');
+  const bubble = document.createElement('div');
+  bubble.className = 'assistant-bubble ' + who;
+  bubble.textContent = text;
+  messages.appendChild(bubble);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function submitAssistantInput() {
+  const input = document.getElementById('assistantInput');
+  const question = input.value.trim();
+  if (!question) return;
+  addAssistantBubble(question, 'user');
+  input.value = '';
+  const answer = await getAssistantAnswer(question);
+  addAssistantBubble(answer, 'bot');
+}
+
+function stripHtmlTags(html) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+}
+
+async function getAssistantAnswer(question) {
+  const q = question.toLowerCase();
+  const data = window.__currentTeamData;
+  if (!data) return "Look up your team first with your Team Code, then ask me anything!";
+
+  // 1. Rank / standing
+  if (/\brank(ed|ing)?\b|\bstanding\b|\bplace\b|\bposition\b|how (are|is) (we|my team) doing/.test(q)) {
+    if (data.rank) return `Your team is ranked #${data.rank} of ${data.totalTeams} teams, with ${data.score.totalPoints} points so far.`;
+    return `Your team isn't currently in the official standings — this usually means fewer than 3 active members. Check with People & Culture if that doesn't sound right.`;
+  }
+
+  // 2. Points total
+  if (/\b(points?|score)\b/.test(q) && !/why|not count|zero|didn'?t/.test(q)) {
+    return `Your team has ${data.score.totalPoints} points from ${data.score.entryCount} logged entries so far. ${data.score.note || ''}`;
+  }
+
+  // 3. Pending entries
+  if (/\bpending\b|\bwaiting\b|\bunder review\b/.test(q)) {
+    return data.score.pendingReview > 0
+      ? `You have ${data.score.pendingReview} ${data.score.pendingReview === 1 ? 'entry' : 'entries'} still pending review — these are already counted in your total, but could still be adjusted after a check.`
+      : `Nothing's currently pending review for your team — everything's either confirmed or resolved.`;
+  }
+
+  // 4. "Why is X 0 points / not eligible / didn't count" — search whatever member entries
+  // are already loaded on the page (tapping a teammate's name loads theirs).
+  if (/why|not (count|eligible)|didn'?t count|zero point|0 point/.test(q)) {
+    const allLoaded = Object.values(memberEntriesCache || {}).flat();
+    if (allLoaded.length === 0) {
+      return "Tap your name above to load your logged activities first, then ask me again about a specific one!";
+    }
+    const activityWords = ['walking', 'running', 'cardio', 'basketball', 'volleyball', 'badminton', 'pickleball', 'football'];
+    const mentioned = activityWords.find(w => q.includes(w));
+    let candidates = allLoaded.filter(e => e.status !== 'Confirmed');
+    if (mentioned) {
+      const matched = candidates.filter(e => e.activityType.toLowerCase().includes(mentioned));
+      if (matched.length > 0) candidates = matched;
+    }
+    if (candidates.length === 0) {
+      return "I don't see any entries that aren't fully confirmed among the ones loaded — tap a teammate's name to load theirs too if you're asking about someone else's entry.";
+    }
+    const e = candidates[0];
+    let answer = `${e.activityType} on ${e.date}: ${e.points} pts, status "${e.status}".`;
+    if (e.adminNotes && e.adminNotes.length) answer += ' ' + e.adminNotes.join(' ');
+    if (e.status === 'Under Review') answer += ' This is still being checked — it already counts toward your total for now.';
+    if (e.status === 'Not Counted' && (!e.adminNotes || e.adminNotes.length === 0)) {
+      answer += ' This one didn\'t count — check with your Team Leader or People & Culture for the specific reason if it\'s not clear.';
+    }
+    return answer;
+  }
+
+  // 5. Everything else — search the Rules & FAQ content
+  const scoringCfg = await ensureRulebookScoringConfig();
+  const resolvedHtml = t => typeof t.html === 'function' ? t.html(scoringCfg) : t.html;
+  const scored = RULEBOOK.map(t => {
+    const text = (t.title + ' ' + (t.section || '') + ' ' + stripHtmlTags(resolvedHtml(t))).toLowerCase();
+    const words = q.split(/\s+/).filter(w => w.length > 3);
+    const score = words.filter(w => text.includes(w)).length;
+    return { topic: t, score };
+  }).filter(r => r.score > 0).sort((a, b) => b.score - a.score);
+
+  if (scored.length > 0) {
+    const plain = stripHtmlTags(resolvedHtml(scored[0].topic));
+    const excerpt = plain.length > 280 ? plain.slice(0, 280) + '…' : plain;
+    const sectionRef = scored[0].topic.section ? ` (${scored[0].topic.section})` : '';
+    return `From "${scored[0].topic.title}"${sectionRef} of the Mechanics doc: ${excerpt} You can find this in full on the Rules & FAQ page.`;
+  }
+
+  return "I couldn't quite match that — try asking about your rank, points, a pending entry, or check the Rules & FAQ page for anything more specific.";
+}
 
 function navigate(view) {
   location.hash = view === "home" ? "" : view;
@@ -911,6 +1443,12 @@ function goHome() { navigate("home"); }
   }
 })();
 
+(function setupAssistantFab() {
+  const topbarLogo = document.querySelector('.topbar img');
+  const img = document.getElementById('assistantFabImg');
+  if (topbarLogo && img) img.src = topbarLogo.src;
+})();
+
 let loadingDepth = 0;
 function showLoading(message) {
   loadingDepth++;
@@ -940,6 +1478,7 @@ function renderRoute() {
   if (view === "entry" && !window.__sportsLoaded) loadSportOptions();
   if (view === "register") initRegisterView();
   if (view === "leaderboard") loadLeaderboard();
+  if (view === "rules" && !window.__rulebookRendered) { renderRulebook(); window.__rulebookRendered = true; }
 }
 window.addEventListener("hashchange", renderRoute);
 document.addEventListener("DOMContentLoaded", renderRoute);
@@ -971,7 +1510,7 @@ const ICON_LINK = `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" s
 const ICON_CHART = `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#5000B3" stroke-width="1.6"><path d="M4 20V10" stroke="#FF6300"/><path d="M10 20V4"/><path d="M16 20v-7" stroke="#FF6300"/><path d="M3 20h18" stroke-linecap="round"/></svg>`;
 const ICON_SHIELD = `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#5000B3" stroke-width="1.6"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4" stroke="#FF6300"/></svg>`;
 const ICON_WARNING = `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#5000B3" stroke-width="1.6"><path d="M12 3l10 18H2z"/><path d="M12 10v4" stroke="#FF6300" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="#FF6300" stroke="none"/></svg>`;
-const ICON_GIFT = `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#5000B3" stroke-width="1.6"><rect x="3" y="9" width="18" height="11" rx="1"/><path d="M3 13h18" stroke="#FF6300"/><path d="M12 9v11" stroke="#FF6300"/><path d="M12 9c-1.5-4-6-4-6-1 0 1.5 2 1 6 1zM12 9c1.5-4 6-4 6-1 0 1.5-2 1-6 1z"/></svg>`;
+const ICON_AGREEMENT = `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#5000B3" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#FF6300"/></svg>`;
 
 const ONBOARD_SLIDES = [
   { icon: ICON_TEAM, title: "Build Your Squad", text: "Teams are exactly 5 people, from any department — mixed teams are fine this season. One Team Leader keeps things organized." },
@@ -979,7 +1518,7 @@ const ONBOARD_SLIDES = [
   { icon: ICON_CHART, title: "How Points Work", text: "Solo activities (walking, running, workouts) score by distance or time. Team sports score a flat amount per game — no reward for exaggerating." },
   { icon: ICON_SHIELD, title: "Play Fair", text: "Entries need GPS tracking with visibility set to Everyone. Daily point caps and random spot-checks keep the leaderboard honest." },
   { icon: ICON_WARNING, title: "Know the Consequences", text: "Breaking a rule means a warning, then a point deduction, then losing the ability to earn more — but your teammates keep playing." },
-  { icon: ICON_GIFT, title: "Prizes & Agreement", text: "Prize amounts will be announced separately. Registering means your team agrees to follow the full Mechanics document for all 60 days." },
+  { icon: ICON_AGREEMENT, title: "Team Agreement", text: "Registering means your team agrees to follow the full Mechanics document for all 60 days." },
 ];
 
 let onboardStep = 0;
@@ -1055,7 +1594,7 @@ function renderOnboardStep() {
     document.getElementById('onboardNextBtn').textContent = 'Next';
     document.getElementById('onboardNextBtn').disabled = !onboardConfirmed[onboardStep];
   } else {
-    document.getElementById('onboardIconWrap').innerHTML = ICON_GIFT.replace(/#5000B3/g, '#FF6300').replace(/#FF6300/g,'#5000B3');
+    document.getElementById('onboardIconWrap').innerHTML = ICON_AGREEMENT.replace(/#5000B3/g, '#FF6300').replace(/#FF6300/g,'#5000B3');
     document.getElementById('onboardTitle').textContent = 'One Last Thing';
     document.getElementById('onboardText').textContent = mechanicsPdfUrl
       ? 'Download and keep a copy of the full Mechanics document before you register.'
@@ -1424,6 +1963,8 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
       let confirmText;
       if (String(data.status).indexOf('Late Submission') !== -1) {
         confirmText = 'This was logged outside the review window for the activity date, so it\'s being held for a quick check before it counts toward your team\'s tally.';
+      } else if (data.status === 'Logged — Attendance Only') {
+        confirmText = 'This has been logged for attendance, but since your Team Leader hasn\'t confirmed active play yet, it doesn\'t earn points.';
       } else if (data.specialTag) {
         confirmText = data.points + ' pts added to your team\'s tally — boosted by "' + data.specialTag + '"! ⭐';
       } else {
@@ -1480,7 +2021,11 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     }
     document.getElementById('rTeamName').textContent = data.team.teamName;
     document.getElementById('rTeamLeader').textContent = 'Team Leader: ' + data.team.teamLeaderName;
-    document.getElementById('rRank').textContent = data.rank ? ('Ranked #' + data.rank + ' of ' + data.totalTeams + ' teams') : '';
+    document.getElementById('rRank').textContent = data.rank
+      ? ('Ranked #' + data.rank + ' of ' + data.totalTeams + ' teams')
+      : (data.eligible === false ? 'Not currently ranked — needs at least 3 active members for the official standings' : '');
+    document.getElementById('rRank').style.color = data.rank ? 'var(--orange-deep)' : '#999';
+    document.getElementById('rRank').style.fontSize = data.rank ? '15px' : '12px';
     const noticesHtml = (data.notices || []).map(n => `
       <div class="notice-card">
         <div class="notice-date">${new Date(n.timestamp).toLocaleDateString()}</div>
@@ -1493,6 +2038,8 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     document.getElementById('rPending').textContent = data.score.pendingReview;
     document.getElementById('rNote').textContent = data.score.note;
     window.__currentTeamCode = code;
+    window.__currentTeamData = data;
+    document.getElementById('assistantFab').style.display = 'block';
     const perMember = data.score.perMember || {};
     document.getElementById('rMembers').innerHTML = data.team.members.map(m => {
       const pts = perMember[m.strava] || 0;
@@ -1738,6 +2285,21 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     if (data.settings.lateSubmissionWindowDays !== undefined) {
       document.getElementById('lateWindowInput').value = data.settings.lateSubmissionWindowDays;
     }
+    if (data.settings.scoring) {
+      const s = data.settings.scoring;
+      document.getElementById('scoreWalkingPerKm').value = s.walkingPerKm;
+      document.getElementById('scoreWalkingCapKm').value = s.walkingCapKm;
+      document.getElementById('scoreRunningPerKm').value = s.runningPerKm;
+      document.getElementById('scoreRunningCapKm').value = s.runningCapKm;
+      document.getElementById('scoreRunningWeekendCapKm').value = s.runningWeekendCapKm;
+      document.getElementById('scoreCardioPerBlock').value = s.cardioPerBlock;
+      document.getElementById('scoreCardioCapBlocks').value = s.cardioCapBlocks;
+      document.getElementById('scoreCategoryBPoints').value = s.categoryBPoints;
+      document.getElementById('scoreDailyCap').value = s.dailyPointCap;
+      document.getElementById('scoreWeeklyMin').value = s.weeklyMinActivities;
+      document.getElementById('scoreWeeklyPenalty').value = s.weeklyMinPenalty;
+      document.getElementById('scoreViolationPenalty').value = s.secondViolationPenalty;
+    }
     if (data.settings.registrationClosingDate) {
       document.getElementById('regCloseInput').value = toLocalDatetimeInputValue(data.settings.registrationClosingDate);
     }
@@ -1871,6 +2433,47 @@ document.getElementById('lateWindowSaveBtn').addEventListener('click', async fun
     msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
     this.disabled = false; this.textContent = 'Save Window';
+  }
+});
+
+document.getElementById('scoringRulesSaveBtn').addEventListener('click', async function(){
+  const msg = document.getElementById('scoringRulesMsg');
+  msg.style.display = 'none';
+  const fields = {
+    walkingPerKm: 'scoreWalkingPerKm', walkingDailyCapKm: 'scoreWalkingCapKm',
+    runningPerKm: 'scoreRunningPerKm', runningDailyCapKm: 'scoreRunningCapKm', runningWeekendCapKm: 'scoreRunningWeekendCapKm',
+    soloCardioPerBlock: 'scoreCardioPerBlock', soloCardioDailyCapBlocks: 'scoreCardioCapBlocks',
+    categoryBPoints: 'scoreCategoryBPoints', dailyPointCap: 'scoreDailyCap',
+    weeklyMinActivities: 'scoreWeeklyMin', weeklyMinPenalty: 'scoreWeeklyPenalty',
+    secondViolationPenalty: 'scoreViolationPenalty',
+  };
+  const payload = { action: 'admin_set_scoring_rules', adminKey };
+  for (const [key, id] of Object.entries(fields)) {
+    const val = document.getElementById(id).value;
+    if (val === '' || Number(val) < 0) {
+      msg.className = 'msg error'; msg.textContent = 'Every field needs a valid, non-negative number.'; return;
+    }
+    payload[key] = Number(val);
+  }
+
+  if (!(await customConfirm('Save these scoring rules? This changes the live scoring math for every entry submitted from now on — already-scored entries are not affected.'))) return;
+
+  this.disabled = true; this.textContent = 'Saving…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.className = 'msg success'; msg.textContent = 'Saved — applies to new submissions from now on.';
+    } else {
+      msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
+    }
+  } catch (err) {
+    msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+  } finally {
+    this.disabled = false; this.textContent = 'Save Scoring Rules';
   }
 });
 
@@ -2214,7 +2817,7 @@ function badgeClass(status) {
   if (String(status).indexOf('Flagged') === 0) return 'flagged';
   if (String(status).indexOf('Pending') === 0) return 'pending';
   if (status === 'Approved') return 'approved';
-  if (status === 'Declined') return 'declined';
+  if (status === 'Declined' || status === 'Logged — Attendance Only') return 'declined';
   return 'auto';
 }
 
@@ -2241,7 +2844,7 @@ function renderQueue(filter) {
   if (capped) items = items.slice(0, RENDER_CAP);
   const STATUS_OPTIONS = ['Auto-Logged', 'Approved', 'Declined', 'Pending Fair Play Spot-Check',
     'Pending Approval — Sport Not Pre-Approved', 'Pending Approval — Late Submission',
-    'Pending Approval — Weekly Minimum Penalty',
+    'Pending Approval — Weekly Minimum Penalty', 'Logged — Attendance Only',
     'Flagged — Exceeds Daily Cap', 'Flagged — Unusually Fast Pace', 'Flagged — Duplicate Strava Link',
     'Rejected — Second Category B Session This Day', 'Rejected — Member Disqualified'];
 
@@ -2270,7 +2873,7 @@ function renderQueue(filter) {
             ${e.stravaLink ? `<a href="${e.stravaLink}" target="_blank">Strava Link</a>` : ''}
             ${e.proofLink1 ? `<a href="${e.proofLink1}" target="_blank">Start Proof</a>` : ''}
             ${e.proofLink2 ? `<a href="${e.proofLink2}" target="_blank">End Proof</a>` : ''}
-            ${canDecide ? `<a href="javascript:void(0)" class="comment-toggle-link" style="margin:0 0 0 10px;" onclick="this.style.display='none';this.nextElementSibling.style.display='block';">+ Comment</a>` : ''}
+            ${canDecide ? `<a href="javascript:void(0)" class="comment-toggle-link" style="margin:0 0 0 10px;" onclick="this.style.display='none'; this.closest('.entry-card').querySelector('.admin-comment').style.display='block';">+ Comment</a>` : ''}
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0;">
             ${canDecide ? `
@@ -2432,7 +3035,7 @@ async function loadTeams() {
           </select>
           <label>Reason</label>
           <textarea id="violationReason-${safeId}" placeholder="What rule was broken?"></textarea>
-          <p class="hint" style="margin-top:6px;">1st: warning only. 2nd: automatic 20-pt team deduction. 3rd: member can no longer earn points.</p>
+          <p class="hint" style="margin-top:6px;">1st: warning only. 2nd: automatic team point deduction (amount set in Controls). 3rd: member can no longer earn points.</p>
           <button type="button" class="primary" style="margin-top:6px;" onclick="logViolation('${teamNameEsc}','${safeId}',this)">Log Violation</button>
         </div>
 
@@ -2563,9 +3166,9 @@ function renderAdminLeaderboard(filter) {
   if (adminLeaderboardCache.length === 0) { list.innerHTML = '<p class="hint">No teams registered yet.</p>'; return; }
   const items = filter === 'all' ? adminLeaderboardCache : adminLeaderboardCache.slice(0, Number(filter));
   list.innerHTML = items.map(t => `
-    <div class="lb-row">
-      <div class="lb-rank ${t.rank <= 3 ? 'top3' : ''}">${t.rank}</div>
-      <div class="lb-name">${t.teamName}</div>
+    <div class="lb-row" ${t.rank === null ? 'style="opacity:.55;"' : ''}>
+      <div class="lb-rank ${t.rank !== null && t.rank <= 3 ? 'top3' : ''}">${t.rank !== null ? t.rank : '—'}</div>
+      <div class="lb-name">${t.teamName}${t.rank === null ? ' <span style="font-size:10px;color:#a4292f;font-weight:700;">(not ranked — under 3 active members)</span>' : ''}</div>
       <div class="lb-points">${t.points} pts</div>
     </div>
   `).join('');
@@ -2581,7 +3184,8 @@ document.querySelectorAll('.lbFilterBtn').forEach(btn => {
 
 function getFilteredLeaderboardItems() {
   const filter = document.querySelector('.lbFilterBtn.active')?.dataset.filter || 'all';
-  return filter === 'all' ? adminLeaderboardCache : adminLeaderboardCache.slice(0, Number(filter));
+  const ranked = adminLeaderboardCache.filter(t => t.rank !== null);
+  return filter === 'all' ? ranked : ranked.slice(0, Number(filter));
 }
 
 function buildLeaderboardCanvas(items, headerText) {
@@ -2702,7 +3306,7 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
 });
 
 async function toggleTeamStatus(teamName, newStatus, btnEl) {
-  if (newStatus === 'Disqualified' && !(await customConfirm('Disqualify "' + teamName + '"? They\'ll stop being eligible for prizes and their status will show as Disqualified everywhere. You can reactivate them later if needed.'))) return;
+  if (newStatus === 'Disqualified' && !(await customConfirm('Disqualify "' + teamName + '"? Their status will show as Disqualified everywhere. You can reactivate them later if needed.'))) return;
   btnEl.disabled = true;
   try {
     const res = await fetch(SCRIPT_URL, {
