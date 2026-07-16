@@ -87,7 +87,6 @@
   }
   .grid-card:active{ transform:scale(.97); }
   .grid-card.closed{ opacity:.45; pointer-events:none; filter:grayscale(60%); }
-  .grid-card.checking{ opacity:.7; pointer-events:none; }
   .grid-card.closed p{ color:#a4292f; font-weight:700; }
   .grid-card .icon-circle{
     width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center;
@@ -1590,8 +1589,9 @@ document.addEventListener("DOMContentLoaded", renderRoute);
 
 async function applyHomeCardAvailability() {
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) return;
-  const cardIds = ['cardRegister', 'cardEntry', 'cardLeaderboard'];
-  cardIds.forEach(id => document.getElementById(id).classList.add('checking'));
+  const isFirstVisit = !window.__homeCheckedOnce;
+  window.__homeCheckedOnce = true;
+  if (isFirstVisit) showLoading('Loading…');
   try {
     const res = await fetch(SCRIPT_URL + '?action=settings');
     const data = await res.json();
@@ -1626,7 +1626,7 @@ async function applyHomeCardAvailability() {
   } catch (err) {
     // If this fails, cards just stay in their default enabled state — not worth blocking the home screen over.
   } finally {
-    cardIds.forEach(id => document.getElementById(id).classList.remove('checking'));
+    if (isFirstVisit) hideLoading();
   }
 }
 
