@@ -1063,7 +1063,7 @@
 
 <div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,0,31,.75);z-index:3000;align-items:center;justify-content:center;">
   <div style="text-align:center;" id="loadingLogoWrap">
-    <p style="color:#fff;margin-top:16px;font-weight:700;font-size:14px;letter-spacing:.03em;">Loading…</p>
+    <p style="color:#fff;margin-top:16px;font-weight:700;font-size:14px;letter-spacing:.03em;transition:opacity .4s ease;">Loading…</p>
   </div>
 </div>
 
@@ -1390,7 +1390,7 @@ async function renderRulebook() {
   const content = document.getElementById('rulebookContent');
 
   if (!__rulebookScoringConfig) {
-    showLoading('Loading current rules…');
+    showLoading(['Flipping through the playbook…', 'Dusting off the rulebook…']);
     await ensureRulebookScoringConfig();
     hideLoading();
   }
@@ -1586,13 +1586,18 @@ function showLoading(message) {
   clearInterval(loadingRotateTimer);
   if (Array.isArray(message)) {
     let i = 0;
-    if (msgEl) msgEl.textContent = message[0];
+    if (msgEl) { msgEl.style.opacity = '1'; msgEl.textContent = message[0]; }
     loadingRotateTimer = setInterval(() => {
-      i = (i + 1) % message.length;
-      if (msgEl) msgEl.textContent = message[i];
-    }, 1400);
+      if (!msgEl) return;
+      msgEl.style.opacity = '0';
+      setTimeout(() => {
+        i = (i + 1) % message.length;
+        msgEl.textContent = message[i];
+        msgEl.style.opacity = '1';
+      }, 400);
+    }, 2600);
   } else {
-    if (msgEl) msgEl.textContent = message || 'Loading…';
+    if (msgEl) { msgEl.style.opacity = '1'; msgEl.textContent = message || 'Loading…'; }
   }
   overlay.style.display = 'flex';
 }
@@ -1779,7 +1784,7 @@ async function initRegisterView() {
     return;
   }
 
-  showLoading('Loading registration…');
+  showLoading(['Setting up the sign-up sheet…', 'Checking if registration is open…']);
   try {
     const res = await fetch(SCRIPT_URL + '?action=settings');
     const data = await res.json();
@@ -1957,7 +1962,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e){
   }
 
   btn.disabled = true; btn.textContent = 'Submitting…';
-  showLoading('Registering your team…');
+  showLoading('Locking in your roster…');
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -2103,7 +2108,7 @@ document.getElementById('entryFindTeamBtn').addEventListener('click', async func
 
   const btn = this;
   btn.disabled = true; btn.textContent = 'Finding…';
-  showLoading('Finding your team…');
+  showLoading('Scouting your team…');
   try {
     const res = await fetch(SCRIPT_URL + '?action=lookup&code=' + encodeURIComponent(code));
     const data = await res.json();
@@ -2292,7 +2297,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
   }
 
   btn.disabled = true; btn.textContent = 'Submitting…';
-  showLoading('Submitting your entry…');
+  showLoading('Logging your effort…');
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -2352,7 +2357,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
   }
 
   btn.disabled = true; btn.textContent = 'Looking up…';
-  showLoading('Finding your team…');
+  showLoading('Scouting your team…');
   try {
     const res = await fetch(SCRIPT_URL + '?action=lookup&code=' + encodeURIComponent(code));
     const data = await res.json();
@@ -2565,7 +2570,7 @@ async function loadLeaderboard() {
     return;
   }
   try {
-    showLoading('Loading leaderboard…');
+    showLoading(['Tallying the scores…', 'Checking the standings…']);
     const res = await fetch(SCRIPT_URL + '?action=leaderboard');
     const data = await res.json();
     if (!data.success) {
@@ -2607,7 +2612,7 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'This app isn\'t connected to a backend yet.'; return;
   }
   this.disabled = true; this.textContent = 'Checking…';
-  showLoading('Unlocking admin panel…');
+  showLoading('Opening the control room…');
   try {
     const res = await fetch(SCRIPT_URL + '?action=admin_settings&adminKey=' + encodeURIComponent(pass));
     const data = await res.json();
