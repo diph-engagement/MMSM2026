@@ -352,6 +352,9 @@
     width:40px; height:40px; border-radius:50%; border:none; background:var(--orange); color:#fff;
     display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
   }
+  .scenario-chat .assistant-messages{ background:var(--grey-light); border-radius:12px; padding:10px 12px; margin-bottom:10px; max-height:280px; }
+  .scenario-chat .assistant-chips{ padding:0 0 10px; }
+  .scenario-chat .assistant-input-row{ border-top:1px solid #eee; padding:10px 0 0; }
   @keyframes logoPulse{ 0%,100%{ transform:scale(1); opacity:.7; } 50%{ transform:scale(1.12); opacity:1; } }
 
   .lb-row{ display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid #eee; }
@@ -522,6 +525,25 @@
         <div id="rulesTopicPills" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;"></div>
       </div>
       <div id="rulebookContent" style="margin-top:14px;"></div>
+
+      <div class="card scenario-chat" style="margin-top:14px;">
+        <h3 style="margin:0 0 4px;font-size:15px;color:var(--purple-deep);">Ask a Scenario</h3>
+        <p class="hint" style="margin:0 0 10px;">Try "42km run on Saturday," "30 min solo cardio," or "basketball with photos" — I'll work it out using the current scoring rules.</p>
+        <div class="assistant-messages" id="scenarioMessages">
+      <div class="assistant-bubble bot">Warm me up with a "what if" scenario and I'll calculate the points using the current rules — distances, durations, and sports all work.</div>
+        </div>
+        <div class="assistant-chips">
+          <button type="button" onclick="askScenario('42km run on Saturday')">42km run, Saturday?</button>
+          <button type="button" onclick="askScenario('30 min solo cardio')">30 min cardio?</button>
+          <button type="button" onclick="askScenario('basketball with photos')">Basketball game?</button>
+        </div>
+        <div class="assistant-input-row">
+          <input type="text" id="scenarioInput" placeholder="Describe a scenario...">
+          <button type="button" onclick="submitScenarioInput()" aria-label="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+          </button>
+        </div>
+      </div>
     </section>
 
     <section id="view-register" class="view">
@@ -772,7 +794,7 @@
       </button>
     </div>
     <div class="assistant-messages" id="assistantMessages">
-      <div class="assistant-bubble bot">Hi! I can tell you your team's rank and points, explain why a specific entry scored what it did, or answer a rules question. What do you need?</div>
+      <div class="assistant-bubble bot">Hi! I can give you your team's rank and points, spot-check why an entry scored what it did, or answer a rules question. What do you need?</div>
     </div>
     <div class="assistant-chips" id="assistantChips">
       <button type="button" onclick="askAssistant('What is our rank?')">What's our rank?</button>
@@ -1583,10 +1605,185 @@ function stripHtmlTags(html) {
   return html.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 }
 
+function searchRulebookExcerpt(question, scoringCfg) {
+  const q = question.toLowerCase();
+  const resolvedHtml = t => typeof t.html === 'function' ? t.html(scoringCfg) : t.html;
+  const scored = RULEBOOK.map(t => {
+    const text = (t.title + ' ' + (t.section || '') + ' ' + stripHtmlTags(resolvedHtml(t))).toLowerCase();
+    const words = q.split(/\s+/).filter(w => w.length > 3);
+    const score = words.filter(w => text.includes(w)).length;
+    return { topic: t, score };
+  }).filter(r => r.score > 0).sort((a, b) => b.score - a.score);
+
+  if (scored.length === 0) return null;
+  const plain = stripHtmlTags(resolvedHtml(scored[0].topic));
+  const excerpt = plain.length > 280 ? plain.slice(0, 280) + '…' : plain;
+  const sectionRef = scored[0].topic.section ? ` (${scored[0].topic.section})` : '';
+  return `From "${scored[0].topic.title}"${sectionRef} of the Mechanics doc: ${excerpt} You can find this in full on the Rules & FAQ page.`;
+}
+
+// ============ SCENARIO CALCULATOR (Rules & FAQ page only) ============
+// Fraud-detection pace floors — not admin-configurable, mirrors Code.gs getCategoryARules().
+const SCENARIO_PACE_THRESHOLDS = { Walking: 6.0, Running: 3.3 };
+const SCENARIO_COMMON_SPORTS = ['basketball', 'volleyball', 'badminton', 'pickleball', 'football', 'soccer'];
+
+// Holds a pending clarification (e.g. "how far did you run?") between one reply and the next.
+// Cleared as soon as it's resolved, or abandoned if the next message doesn't look like an answer.
+let scenarioContext = null;
+
+function scenarioParseNumber(re, text) {
+  const m = text.match(re);
+  return m ? parseFloat(m[1]) : null;
+}
+
+function roundToHundredths(n) {
+  return Math.round(n * 100) / 100;
+}
+
+function calcDistanceScenario(distance, activity, isWeekend, q, cfg) {
+  const isRunning = activity === 'Running';
+  const perKm = isRunning ? cfg.runningPerKm : cfg.walkingPerKm;
+  const capKm = isRunning && isWeekend ? Math.max(cfg.runningCapKm, cfg.runningWeekendCapKm) : (isRunning ? cfg.runningCapKm : cfg.walkingCapKm);
+  const capPoints = roundToHundredths(perKm * capKm);
+  const rawPoints = roundToHundredths(distance * perKm);
+  const points = Math.min(rawPoints, capPoints);
+
+  let msg = `A ${distance}km ${activity.toLowerCase()}${isWeekend ? ' on a weekend day' : ''} would earn ${points} pts (${distance}km × ${perKm} pts/km)`;
+  if (rawPoints > capPoints) {
+    msg += `, capped at the ${isWeekend && isRunning ? 'weekend ' : ''}${capKm}km / ${capPoints}-pt daily ceiling for ${activity}`;
+  }
+  msg += '.';
+
+  const duration = scenarioParseNumber(/(\d+(?:\.\d+)?)\s*(?:min(?:ute)?s?)/, q);
+  if (duration) {
+    const pace = duration / distance;
+    const threshold = SCENARIO_PACE_THRESHOLDS[activity];
+    if (pace < threshold) {
+      msg += ` Heads up though — ${pace.toFixed(2)} min/km is faster than the ${threshold.toFixed(1)} min/km threshold for ${activity.toLowerCase()}, so this would get flagged for a manual pace check before it counts.`;
+    }
+  }
+  if (points > cfg.dailyPointCap) {
+    msg += ` Since that's above the ${cfg.dailyPointCap}-point daily cap (combined with anything else logged that day), it'd also get held for a quick admin look before counting — not blocked, just checked.`;
+  }
+  return msg;
+}
+
+function calcCardioScenario(duration, cfg) {
+  const blocks = Math.floor(duration / 30);
+  if (blocks === 0) {
+    return `A ${duration}-minute Solo Cardio session is under the 30-minute block, so no full block is completed — that'd earn 0 pts.`;
+  }
+  const rawPoints = blocks * cfg.cardioPerBlock;
+  const points = Math.min(rawPoints, cfg.cardioCapPoints);
+  let msg = `A ${duration}-minute Solo Cardio session completes ${blocks} block${blocks > 1 ? 's' : ''} of 30 minutes, earning ${points} pts (${cfg.cardioPerBlock} pts/block)`;
+  if (rawPoints > cfg.cardioCapPoints) msg += `, capped at the ${cfg.cardioCapPoints}-pt daily ceiling for Solo Cardio`;
+  msg += '.';
+  return msg;
+}
+
+async function getScenarioAnswer(question) {
+  const q = question.toLowerCase();
+  const cfg = await ensureRulebookScoringConfig();
+
+  // Resolve a pending clarification first, if there is one. Only treat this reply as the
+  // answer if it actually contains a number — otherwise assume the person moved on to a
+  // different question and drop the old context rather than forcing it.
+  if (scenarioContext) {
+    const ctx = scenarioContext;
+    if (/\d/.test(q)) {
+      scenarioContext = null;
+      const num = scenarioParseNumber(/(\d+(?:\.\d+)?)/, q);
+      if (num !== null) {
+        if (ctx.type === 'need-distance') return calcDistanceScenario(num, ctx.activity, ctx.isWeekend || /saturday|sunday|weekend/.test(q), q, cfg);
+        if (ctx.type === 'need-duration-cardio') return calcCardioScenario(num, cfg);
+      }
+    } else {
+      scenarioContext = null; // abandon and fall through to fresh detection below
+    }
+  }
+
+  // 1. Category A — distance-based (Walking/Running)
+  const isRunning = /run/.test(q);
+  const isWalking = /walk/.test(q);
+  if (isRunning || isWalking) {
+    const activity = isRunning ? 'Running' : 'Walking';
+    const distance = scenarioParseNumber(/(\d+(?:\.\d+)?)\s*(?:km|kilometers?)/, q);
+    if (distance === null) {
+      scenarioContext = { type: 'need-distance', activity, isWeekend: /saturday|sunday|weekend/.test(q) };
+      return `How far did you ${activity.toLowerCase()} — in km?`;
+    }
+    return calcDistanceScenario(distance, activity, /saturday|sunday|weekend/.test(q), q, cfg);
+  }
+
+  // 2. Solo Cardio — duration-based
+  if (/cardio|workout/.test(q)) {
+    const duration = scenarioParseNumber(/(\d+(?:\.\d+)?)\s*(?:min(?:ute)?s?)/, q);
+    if (duration === null) {
+      scenarioContext = { type: 'need-duration-cardio' };
+      return `How many minutes was the Solo Cardio session?`;
+    }
+    return calcCardioScenario(duration, cfg);
+  }
+
+  // 3. Category B — sport-based
+  const approvedMatch = (cfg.approvedSports || []).find(s => q.includes(s.toLowerCase()));
+  const genericMatch = SCENARIO_COMMON_SPORTS.find(s => q.includes(s));
+  if (approvedMatch || genericMatch) {
+    const sportName = approvedMatch || genericMatch;
+    let msg = `A game of ${sportName} earns ${cfg.categoryBPoints} pts — IF your Team Leader confirms you played at least half the game, you've got a start photo, an end photo or video, and a Strava entry covering your time there.`;
+    if (!approvedMatch) msg += ` Heads up — that sport isn't currently on the pre-approved list, so People & Culture would need to approve it first before it earns points.`;
+    msg += ` Only one Category B session counts per person per day, even across different sports.`;
+    return msg;
+  }
+
+  // 4. Weekly minimum activity requirement
+  if (/weekly minimum|per week|once a week|activit(y|ies)\s*(a|per)\s*week/.test(q)) {
+    return `Each active member needs at least ${cfg.weeklyMinActivities} logged activities per week. Falling short means a ${cfg.weeklyMinPenalty}-point deduction for the team once that week closes — held pending admin review, not automatic.`;
+  }
+
+  return null; // no scenario pattern matched — caller falls back to the rulebook search
+}
+
+async function getRulebookScenarioAnswer(question) {
+  const scenario = await getScenarioAnswer(question);
+  if (scenario) return scenario;
+  const cfg = await ensureRulebookScoringConfig();
+  const excerpt = searchRulebookExcerpt(question, cfg);
+  return excerpt || "That scenario just ran past my finish line — try mentioning a distance (\"10km run\"), a duration (\"30 min cardio\"), or a sport name, or check the topics above for anything more specific.";
+}
+
+function addScenarioBubble(text, who) {
+  const wrap = document.getElementById('scenarioMessages');
+  const bubble = document.createElement('div');
+  bubble.className = 'assistant-bubble ' + (who === 'user' ? 'user' : 'bot');
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+async function submitScenarioInput() {
+  const input = document.getElementById('scenarioInput');
+  const question = input.value.trim();
+  if (!question) return;
+  addScenarioBubble(question, 'user');
+  input.value = '';
+  const answer = await getRulebookScenarioAnswer(question);
+  addScenarioBubble(answer, 'bot');
+}
+
+function askScenario(question) {
+  document.getElementById('scenarioInput').value = question;
+  submitScenarioInput();
+}
+
+document.getElementById('scenarioInput').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') { e.preventDefault(); submitScenarioInput(); }
+});
+
 async function getAssistantAnswer(question) {
   const q = question.toLowerCase();
   const data = window.__currentTeamData;
-  if (!data) return "Look up your team first with your Team Code, then ask me anything!";
+  if (!data) return "Warm up first — look up your team with your Team Code, then ask me anything!";
 
   // 1. Rank / standing
   if (/\brank(ed|ing)?\b|\bstanding\b|\bplace\b|\bposition\b|how (are|is) (we|my team) doing/.test(q)) {
@@ -1635,22 +1832,10 @@ async function getAssistantAnswer(question) {
 
   // 5. Everything else — search the Rules & FAQ content
   const scoringCfg = await ensureRulebookScoringConfig();
-  const resolvedHtml = t => typeof t.html === 'function' ? t.html(scoringCfg) : t.html;
-  const scored = RULEBOOK.map(t => {
-    const text = (t.title + ' ' + (t.section || '') + ' ' + stripHtmlTags(resolvedHtml(t))).toLowerCase();
-    const words = q.split(/\s+/).filter(w => w.length > 3);
-    const score = words.filter(w => text.includes(w)).length;
-    return { topic: t, score };
-  }).filter(r => r.score > 0).sort((a, b) => b.score - a.score);
+  const excerpt = searchRulebookExcerpt(question, scoringCfg);
+  if (excerpt) return excerpt;
 
-  if (scored.length > 0) {
-    const plain = stripHtmlTags(resolvedHtml(scored[0].topic));
-    const excerpt = plain.length > 280 ? plain.slice(0, 280) + '…' : plain;
-    const sectionRef = scored[0].topic.section ? ` (${scored[0].topic.section})` : '';
-    return `From "${scored[0].topic.title}"${sectionRef} of the Mechanics doc: ${excerpt} You can find this in full on the Rules & FAQ page.`;
-  }
-
-  return "I couldn't quite match that — try asking about your rank, points, a pending entry, or check the Rules & FAQ page for anything more specific.";
+  return "That one's outside my training zone — try asking about your rank, points, a pending entry, or head to the Rules & FAQ page for anything more specific.";
 }
 
 function navigate(view) {
