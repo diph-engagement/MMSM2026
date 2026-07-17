@@ -260,6 +260,12 @@
   .mini-lb-points{ font-size:13px; font-weight:700; color:var(--orange-deep); white-space:nowrap; }
   .mini-lb-divider{ text-align:center; font-size:11px; color:#bbb; letter-spacing:.2em; padding:2px 0; }
 
+  .tier-badge{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; }
+  .tier-badge.sm{ padding:2px 7px; font-size:8.5px; }
+  .tier-elite{ background:linear-gradient(135deg,#ffd76a,#e8a415); color:#5a3c00; }
+  .tier-steady{ background:linear-gradient(135deg,#c9c9d6,#9a9cae); color:#33333d; }
+  .tier-rookie{ background:linear-gradient(135deg,#e0a672,#b9702f); color:#4a2c0d; }
+
   .member-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #eee; font-size:13px; }
 
   .member-row-btn{
@@ -778,6 +784,7 @@
           <div class="hero-points-lbl">POINTS</div>
         </div>
         <p id="rRank" style="text-align:center;font-weight:700;color:#fff;font-size:14px;margin:8px 0 0;"></p>
+        <p id="rTierBadge" style="text-align:center;margin:8px 0 0;"></p>
       </div>
 
       <div class="mini-lb-card" id="miniLbCard" style="display:none;">
@@ -1503,7 +1510,7 @@ const RULEBOOK = [
       ["Can I delete an activity after submitting it?", "Not once it's flagged or audited — deleting it is treated as a violation on its own."],
       ["What time zone is the weekly deadline in?", "Philippine Time — entries due by 11:59 PM Sunday."],
       ["I forgot to log an activity from a few days ago — can I still submit it?", "Yes, within " + cfg.lateSubmissionWindowDays + " day" + (cfg.lateSubmissionWindowDays === 1 ? "" : "s") + " it counts normally. Later than that, it's held at 0 points until P&C approves it."],
-      ["What if my requested sport isn't approved in time?", "P&C responds within 2 business days — submit early, not the day you plan to play."],
+      ["What if my requested sport isn't approved in time?", "Request it at least 2 business days before you plan to play, and it should be decided by then. If you cut it closer than that: your entry isn't lost either way — it's logged at 0 points with a \"Pending Approval\" status until People & Culture decides. Example: you request Frisbee on a Thursday planning to play Friday — that's only 1 business day of lead time. If P&C hasn't gotten to it by Friday, your game entry still logs, just sitting at 0 points until they decide, even if that spills into the following week. If the sport gets approved, that same entry can then be approved to count retroactively — no need to resubmit. If it isn't approved, it just stays at 0 points."],
       ["Will our proof photos be shared publicly?", "No — only used to check your entry."],
       ["What if I need to flag my own Team Leader?", "Any other team member can raise it directly with P&C."],
       ["I think someone on another team is cheating — what do I do?", "Flag it within 48 hours. The Fair Play Committee reviews within 3 business days."],
@@ -2720,6 +2727,9 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
       : (data.eligible === false ? 'Not currently ranked — needs at least 3 active members for the official standings' : '');
     document.getElementById('rRank').style.color = data.rank ? '#fff' : 'rgba(255,255,255,.6)';
     document.getElementById('rRank').style.fontSize = data.rank ? '14px' : '12px';
+    const heroTier = getTeamTier(data.rank, data.totalTeams);
+    document.getElementById('rTierBadge').innerHTML = heroTier
+      ? `<span class="tier-badge ${heroTier.cls}">${heroTier.name}</span>` : '';
     const noticesHtml = (data.notices || []).map(n => `
       <div class="notice-card">
         <div class="notice-date">${new Date(n.timestamp).toLocaleDateString()}</div>
@@ -2917,11 +2927,27 @@ function medalRankClass(rank) {
   return rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
 }
 
-function renderMiniLbRow(t, isMe) {
+// Splits the ranked field into thirds — Elite Movers (top third), Steady Striders (middle),
+// Rising Rookies (bottom third). Uses cumulative Math.ceil so any remainder from a non-multiple
+// of 3 lands in the earlier tier(s) rather than the last one.
+function getTeamTier(rank, totalTeams) {
+  if (!rank || !totalTeams) return null;
+  const tier1Cutoff = Math.ceil(totalTeams / 3);
+  const tier2Cutoff = Math.ceil((2 * totalTeams) / 3);
+  if (rank <= tier1Cutoff) return { name: 'ELITE MOVERS', cls: 'tier-elite' };
+  if (rank <= tier2Cutoff) return { name: 'STEADY STRIDERS', cls: 'tier-steady' };
+  return { name: 'RISING ROOKIES', cls: 'tier-rookie' };
+}
+
+function renderMiniLbRow(t, isMe, totalTeams) {
+  const tier = getTeamTier(t.rank, totalTeams);
   return `
     <div class="mini-lb-row ${isMe ? 'me' : ''}">
       <div class="mini-lb-rank ${medalRankClass(t.rank)}">${t.rank}</div>
-      <div class="mini-lb-name">${isMe ? 'Our Team' : t.teamName}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="mini-lb-name">${isMe ? 'Our Team' : t.teamName}</div>
+        ${tier ? `<span class="tier-badge sm ${tier.cls}" style="margin-top:2px;">${tier.name}</span>` : ''}
+      </div>
       ${t.points !== null ? `<div class="mini-lb-points">${formatPts(t.points)} pts</div>` : ''}
     </div>
   `;
@@ -2942,10 +2968,11 @@ async function loadStandingsPreview(myRank, myTeamName) {
 
     const top3 = data.leaderboard.filter(t => t.rank <= 3);
     const mine = myRank ? data.leaderboard.find(t => t.rank === myRank) : null;
+    const totalTeams = data.leaderboard.length;
 
-    let html = top3.map(t => renderMiniLbRow(t, t.rank === myRank)).join('');
+    let html = top3.map(t => renderMiniLbRow(t, t.rank === myRank, totalTeams)).join('');
     if (mine && myRank > 3) {
-      html += '<div class="mini-lb-divider">···</div>' + renderMiniLbRow(mine, true);
+      html += '<div class="mini-lb-divider">···</div>' + renderMiniLbRow(mine, true, totalTeams);
     }
     container.innerHTML = html;
     card.style.display = 'block';
@@ -2982,14 +3009,20 @@ async function loadLeaderboard() {
       list.innerHTML = '<p class="hint">No teams registered yet.</p>';
       return;
     }
-    list.innerHTML = data.leaderboard.map(t => `
+    list.innerHTML = data.leaderboard.map(t => {
+      const tier = getTeamTier(t.rank, data.leaderboard.length);
+      return `
       <div class="lb-row">
         <div class="lb-rank ${t.rank <= 3 ? 'top3' : ''}">${t.rank}</div>
         ${t.logoUrl ? `<img src="${driveViewToThumbnail(t.logoUrl)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';">` : ''}
-        <div class="lb-name">${t.teamName}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="lb-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.teamName}</div>
+          ${tier ? `<span class="tier-badge sm ${tier.cls}" style="margin-top:2px;">${tier.name}</span>` : ''}
+        </div>
         ${t.points !== null ? `<div class="lb-points">${t.points} pts</div>` : ''}
       </div>
-    `).join('');
+    `;
+    }).join('');
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   } finally {
