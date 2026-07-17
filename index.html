@@ -674,8 +674,14 @@
           <select id="activityType">
             <option>Walking</option>
             <option>Running</option>
-            <option>Solo Cardio Workout</option>
+            <option>Workout</option>
           </select>
+          <div id="workoutTypeField" style="display:none;">
+            <label>Workout Type</label>
+            <select id="workoutType">
+              <option>Loading…</option>
+            </select>
+          </div>
           <div id="distanceField">
             <label>Distance (km)</label>
             <input type="number" step="0.01" id="distanceKm">
@@ -934,8 +940,8 @@
         <input type="number" step="0.1" id="scoreRunningWeekendCapKm">
         <p class="hint" style="margin-top:4px;">Applies automatically when the logged activity date is a Saturday or Sunday — covers half/full marathon distances (21-42km) without raising the weekday cap.</p>
         <div class="row2">
-          <div><label>Solo Cardio pts/30-min block</label><input type="number" step="0.1" id="scoreCardioPerBlock"></div>
-          <div><label>Solo Cardio daily cap (blocks)</label><input type="number" step="1" id="scoreCardioCapBlocks"></div>
+          <div><label>Workout pts/30-min block</label><input type="number" step="0.1" id="scoreCardioPerBlock"></div>
+          <div><label>Workout daily cap (blocks)</label><input type="number" step="1" id="scoreCardioCapBlocks"></div>
         </div>
 
         <p class="rb-sub">Category B — Team Sports</p>
@@ -992,7 +998,7 @@
           <option value="Category B">Category B (any team sport)</option>
           <option value="Walking">Walking only</option>
           <option value="Running">Running only</option>
-          <option value="Solo Cardio Workout">Solo Cardio Workout only</option>
+          <option value="Workout">Workout only</option>
           <option value="Basketball">Basketball only</option>
           <option value="Volleyball">Volleyball only</option>
           <option value="Badminton">Badminton only</option>
@@ -1031,6 +1037,21 @@
         <input type="text" id="sportsInput" placeholder="Basketball, Volleyball, Badminton, Pickleball, Football">
         <button type="button" class="primary" id="sportsSaveBtn">Save List</button>
         <div id="sportsMsg" class="msg"></div>
+      </div>
+
+      <button type="button" class="accordion-header" onclick="toggleAccordion('workoutTypes')">
+        <div>
+          <div class="accordion-title">Workout Types</div>
+          <div class="accordion-desc">What shows in the Workout dropdown for Category A entries.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-workoutTypes" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-workoutTypes" style="display:none;">
+        <p class="hint" style="margin-top:0;">Unlike sports, there's no "Other" fallback here — if a workout type isn't on this list, it's simply not selectable in the entry form until you add it.</p>
+        <label style="margin-top:0;">Workout Types (comma-separated)</label>
+        <input type="text" id="workoutTypesInput" placeholder="Yoga, Zumba, Body Combat, Swimming">
+        <button type="button" class="primary" id="workoutTypesSaveBtn">Save List</button>
+        <div id="workoutTypesMsg" class="msg"></div>
       </div>
     </div>
 
@@ -1319,7 +1340,7 @@ const RULEBOOK = [
     <div class="rb-term"><strong>P&C Team</strong> — The People &amp; Culture Team, running registration, entries, scoring, and disputes.</div>
     <div class="rb-term"><strong>Declared Strava Name</strong> — The name you choose on Strava, given once at registration. Doesn't need to be your real name, but can't change mid-event.</div>
     <div class="rb-term"><strong>Strava Profile Link</strong> — Your actual profile link, given at registration alongside your Declared Name — the real identity check, since a display name can be duplicated or mistyped.</div>
-    <div class="rb-term"><strong>Category A</strong> — Solo activities your phone can track (Walking, Running, Solo Cardio Workouts). Points based on distance or time.</div>
+    <div class="rb-term"><strong>Category A</strong> — Solo activities your phone can track (Walking, Running, Workouts). Points based on distance or time.</div>
     <div class="rb-term"><strong>Category B</strong> — Team/court sports (basketball, volleyball, badminton, pickleball, football). Fixed points per game, not based on how long you played.</div>
     <div class="rb-term"><strong>Roster Lock</strong> — The date after which your 5-person team can't change, unless approved.</div>
     <div class="rb-term"><strong>Snapshot</strong> — A casual weekly score update. Not official, just catches mistakes early.</div>
@@ -1374,7 +1395,7 @@ const RULEBOOK = [
       <li>Every activity must be set to "Everyone" as soon as saved — private or delayed-visibility activities earn zero points.</li>
       <li>Walking/Running need real phone GPS tracking — typed-in distances earn zero points.</li>
       <li>Each activity is one continuous session — don't combine two walks/runs into one entry.</li>
-      <li>Treadmill sessions have no GPS — log as Solo Cardio Workout instead of Running.</li>
+      <li>Treadmill sessions have no GPS — log as Workout instead of Running.</li>
       <li>Cycling, driving, e-scooters, or anything motor/wheeled doesn't count under any category.</li>
       <li>Faking GPS location is treated as cheating — goes straight to the 2nd warning step.</li>
       <li>Deleting/hiding an activity after it's flagged or audited is a rule break too.</li>
@@ -1403,10 +1424,11 @@ const RULEBOOK = [
       <div class="rb-table-row rb-table-head"><span>Activity</span><span>Points</span><span>Daily Limit</span><span>Max/Day</span></div>
       <div class="rb-table-row"><span>Walking</span><span>${cfg.walkingPerKm} pts/km</span><span>${cfg.walkingCapKm} km</span><span>${cfg.walkingCapPoints} pts</span></div>
       <div class="rb-table-row"><span>Running</span><span>${cfg.runningPerKm} pts/km</span><span>${cfg.runningCapKm} km</span><span>${cfg.runningCapPoints} pts</span></div>
-      <div class="rb-table-row"><span>Solo Cardio Workout</span><span>${cfg.cardioPerBlock} pts/30-min block</span><span>${cfg.cardioCapBlocks} blocks</span><span>${cfg.cardioCapPoints} pts</span></div>
+      <div class="rb-table-row"><span>Workout</span><span>${cfg.cardioPerBlock} pts/30-min block</span><span>${cfg.cardioCapBlocks} blocks</span><span>${cfg.cardioCapPoints} pts</span></div>
     </div>
     <p class="rb-note">Weekend exception: if the activity date is a Saturday or Sunday, Running's daily cap rises to ${cfg.runningWeekendCapKm}km — covering half and full marathon distances (21-42km) run on weekend race days. The weekday cap still applies Monday-Friday.</p>
     <p class="rb-note">Only full 30-minute blocks count for workouts — a 45-minute session earns one block, not 1.5. Blocks are per-session, not summed across the day.</p>
+    <p class="rb-note">Workout covers: ${cfg.approvedWorkoutTypes.join(', ')}. This list is admin-managed and may change during the season — pick whatever's currently in the dropdown when you log an entry.</p>
     <p class="rb-sub">Category B — Team &amp; Court Sports</p>
     <ul>
       <li>Pre-approved: ${cfg.approvedSports.join(', ')}. Any other sport needs P&amp;C approval <em>before</em> you play it, or it earns zero points. Response within 2 business days.</li>
@@ -1470,7 +1492,7 @@ const RULEBOOK = [
       ["Can I log an activity using someone else's Strava account?", "No. Doing so is treated as faking an entry."],
       ["My workout was 45 minutes — why only one block's worth of points?", "Only full 30-minute blocks count. 45 minutes earns one block, not 1.5."],
       ["I did two 20-minute workouts in one day — do they add up?", "No. Blocks are counted per individual session, not summed across the day."],
-      ["Can I log a treadmill run?", "Yes — log it as a Solo Cardio Workout instead of Running, since treadmills have no GPS."],
+      ["Can I log a treadmill run?", "Yes — log it as a Workout instead of Running, since treadmills have no GPS."],
       ["What if my Strava failed and did not track my activity?", "Unfortunately, without GPS-tracked data, that activity can't be scored — typed-in distances aren't accepted for anyone, since there'd be no way to tell a genuine tracking failure from someone just not tracking at all. Double-check your phone's location permissions for Strava before your next session. If this keeps happening to you specifically, flag it to People & Culture — repeated technical issues might warrant a manual look, at their discretion (Section 7.2)."],
       ["I have an activity that wasn't tracked in Strava — can I manually add it and just upload photos?", "No. A manually-added Strava activity has no GPS trace, which is the same as a typed-in distance — and typed-in distances earn zero points no matter what. Photos and videos are an extra check on top of real GPS tracking, not a substitute for it — they can't make up for an activity that was never actually tracked live."],
       ["How can I use input from a non-Strava app?", "You don't have to track directly inside the Strava app. If your smartwatch, Garmin, Coros, Apple Watch, or another fitness app can sync or export to Strava, that's completely fine — what matters is that the activity ends up as a real, GPS-tracked entry on your Strava account, visible to Everyone, before you submit its link. The synced activity still needs genuine GPS data though — typed or manually-edited distances earn zero points regardless of which app originally captured it."],
@@ -1510,6 +1532,7 @@ async function ensureRulebookScoringConfig() {
     categoryBPoints: 15, dailyPointCap: 100,
     weeklyMinActivities: 2, weeklyMinPenalty: 20, secondViolationPenalty: 20,
     approvedSports: ['Basketball', 'Volleyball', 'Badminton', 'Pickleball', 'Football'],
+    approvedWorkoutTypes: ['Yoga', 'Zumba', 'Body Combat', 'Swimming'],
     lateSubmissionWindowDays: 3,
   };
   try {
@@ -1519,6 +1542,8 @@ async function ensureRulebookScoringConfig() {
     if (data.success) {
       __rulebookScoringConfig.approvedSports = Array.isArray(data.settings.approvedSports) && data.settings.approvedSports.length > 0
         ? data.settings.approvedSports : fallback.approvedSports;
+      __rulebookScoringConfig.approvedWorkoutTypes = Array.isArray(data.settings.approvedWorkoutTypes) && data.settings.approvedWorkoutTypes.length > 0
+        ? data.settings.approvedWorkoutTypes : fallback.approvedWorkoutTypes;
       __rulebookScoringConfig.lateSubmissionWindowDays = data.settings.lateSubmissionWindowDays !== undefined
         ? data.settings.lateSubmissionWindowDays : fallback.lateSubmissionWindowDays;
     }
@@ -1678,12 +1703,12 @@ function calcDistanceScenario(distance, activity, isWeekend, q, cfg) {
 function calcCardioScenario(duration, cfg) {
   const blocks = Math.floor(duration / 30);
   if (blocks === 0) {
-    return `A ${duration}-minute Solo Cardio session is under the 30-minute block, so no full block is completed — that'd earn 0 pts.`;
+    return `A ${duration}-minute Workout session is under the 30-minute block, so no full block is completed — that'd earn 0 pts.`;
   }
   const rawPoints = blocks * cfg.cardioPerBlock;
   const points = Math.min(rawPoints, cfg.cardioCapPoints);
-  let msg = `A ${duration}-minute Solo Cardio session completes ${blocks} block${blocks > 1 ? 's' : ''} of 30 minutes, earning ${points} pts (${cfg.cardioPerBlock} pts/block)`;
-  if (rawPoints > cfg.cardioCapPoints) msg += `, capped at the ${cfg.cardioCapPoints}-pt daily ceiling for Solo Cardio`;
+  let msg = `A ${duration}-minute Workout session completes ${blocks} block${blocks > 1 ? 's' : ''} of 30 minutes, earning ${points} pts (${cfg.cardioPerBlock} pts/block)`;
+  if (rawPoints > cfg.cardioCapPoints) msg += `, capped at the ${cfg.cardioCapPoints}-pt daily ceiling for Workout`;
   msg += '.';
   return msg;
 }
@@ -1722,12 +1747,12 @@ async function getScenarioAnswer(question) {
     return calcDistanceScenario(distance, activity, /saturday|sunday|weekend/.test(q), q, cfg);
   }
 
-  // 2. Solo Cardio — duration-based
+  // 2. Workout — duration-based
   if (/cardio|workout/.test(q)) {
     const duration = scenarioParseNumber(/(\d+(?:\.\d+)?)\s*(?:min(?:ute)?s?)/, q);
     if (duration === null) {
       scenarioContext = { type: 'need-duration-cardio' };
-      return `How many minutes was the Solo Cardio session?`;
+      return `How many minutes was the Workout session?`;
     }
     return calcCardioScenario(duration, cfg);
   }
@@ -2055,6 +2080,23 @@ async function loadSportOptions() {
     } catch (err) { /* keep fallback list */ }
   }
   select.innerHTML = sports.map(s => `<option>${s}</option>`).join('') + '<option>Other (needs prior approval)</option>';
+}
+
+async function loadWorkoutTypeOptions() {
+  window.__workoutTypesLoaded = true;
+  const select = document.getElementById('workoutType');
+  const fallback = ["Yoga", "Zumba", "Body Combat", "Swimming"];
+  let types = fallback;
+  if (SCRIPT_URL.indexOf('PASTE_YOUR') !== 0) {
+    try {
+      const res = await fetch(SCRIPT_URL + '?action=settings');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.settings.approvedWorkoutTypes) && data.settings.approvedWorkoutTypes.length > 0) {
+        types = data.settings.approvedWorkoutTypes;
+      }
+    } catch (err) { /* keep fallback list */ }
+  }
+  select.innerHTML = types.map(s => `<option>${s}</option>`).join('');
 }
 
 // ============ REGISTER ONBOARDING GATE ============
@@ -2459,9 +2501,11 @@ function setEntryCategory(c){
   document.getElementById('sectionB').classList.toggle('active', c==='B');
 }
 document.getElementById('activityType').addEventListener('change', function(){
-  const isWorkout = this.value === 'Solo Cardio Workout';
+  const isWorkout = this.value === 'Workout';
   document.getElementById('distanceField').style.display = isWorkout ? 'none' : 'block';
   document.getElementById('durationHint').style.display = isWorkout ? 'none' : 'block';
+  document.getElementById('workoutTypeField').style.display = isWorkout ? 'block' : 'none';
+  if (isWorkout && !window.__workoutTypesLoaded) loadWorkoutTypeOptions();
   refreshSpecialActivityCard();
 });
 document.getElementById('sport').addEventListener('change', refreshSpecialActivityCard);
@@ -2588,8 +2632,12 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
     payload.activityType = activityType;
     payload.activityDate = document.getElementById('activityDateA').value;
     payload.stravaLink = document.getElementById('stravaLink').value.trim();
-    if (activityType === 'Solo Cardio Workout') {
+    if (activityType === 'Workout') {
       payload.durationMinutes = document.getElementById('durationMinutes').value;
+      payload.workoutType = document.getElementById('workoutType').value;
+      if (!payload.workoutType) {
+        msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Select what kind of workout this was.'; return;
+      }
     } else {
       payload.distanceKm = document.getElementById('distanceKm').value;
       payload.durationMinutes = document.getElementById('durationMinutes').value;
@@ -2897,7 +2945,7 @@ document.getElementById('codeInput').addEventListener('keydown', function(e){
 // ============ PUBLIC LEADERBOARD ============
 function formatPts(n) {
   const num = Number(n) || 0;
-  return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 const TIER_BADGE_IMAGES = {
@@ -2909,6 +2957,11 @@ const TIER_BADGE_ICONS = {
   'tier-elite': 'data:image/webp;base64,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',
   'tier-steady': 'data:image/webp;base64,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',
   'tier-rookie': 'data:image/webp;base64,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',
+};
+const TIER_ICON_WIDTHS = {
+  'tier-elite': 20,
+  'tier-steady': 20,
+  'tier-rookie': 23,
 };
 
 // Splits the ranked field into thirds — Elite Movers (top third), Steady Striders (middle),
@@ -2958,8 +3011,8 @@ async function loadLeaderboard() {
         <div class="lb-rank ${t.rank <= 3 ? 'top3' : ''}">${t.rank}</div>
         ${t.logoUrl ? `<img src="${driveViewToThumbnail(t.logoUrl)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';">` : ''}
         <div class="lb-name" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.teamName}</div>
-        ${t.points !== null ? `<div class="lb-points">${t.points} pts</div>` : ''}
-        ${tier ? `<img src="${TIER_BADGE_ICONS[tier.cls]}" alt="${tier.name}" title="${tier.name}" style="height:30px;width:auto;flex-shrink:0;">` : ''}
+        ${t.points !== null ? `<div class="lb-points" style="white-space:nowrap;flex-shrink:0;">${formatPts(t.points)} pts</div>` : ''}
+        ${tier ? `<img src="${TIER_BADGE_ICONS[tier.cls]}" alt="${tier.name}" title="${tier.name}" style="height:30px;width:${TIER_ICON_WIDTHS[tier.cls]}px;flex-shrink:0;">` : ''}
       </div>
     `;
     }).join('');
@@ -2998,6 +3051,9 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     applySwitchState('swLeaderboard', data.settings.leaderboardRevealed);
     if (Array.isArray(data.settings.approvedSports)) {
       document.getElementById('sportsInput').value = data.settings.approvedSports.join(', ');
+    }
+    if (Array.isArray(data.settings.approvedWorkoutTypes)) {
+      document.getElementById('workoutTypesInput').value = data.settings.approvedWorkoutTypes.join(', ');
     }
     if (data.settings.lateSubmissionWindowDays !== undefined) {
       document.getElementById('lateWindowInput').value = data.settings.lateSubmissionWindowDays;
@@ -3223,6 +3279,34 @@ document.getElementById('sportsSaveBtn').addEventListener('click', async functio
   }
 });
 
+document.getElementById('workoutTypesSaveBtn').addEventListener('click', async function(){
+  const raw = document.getElementById('workoutTypesInput').value.trim();
+  const msg = document.getElementById('workoutTypesMsg');
+  msg.style.display = 'none';
+  const workoutTypes = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+  if (workoutTypes.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Add at least one workout type.'; return; }
+
+  this.disabled = true; this.textContent = 'Saving…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_update_workout_types', adminKey, workoutTypes }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Saved — the entry form will use this list from now on.';
+      document.getElementById('workoutTypesInput').value = data.approvedWorkoutTypes.join(', ');
+      window.__workoutTypesLoaded = false; // force a refetch next time the entry form needs it
+    } else {
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not save.';
+    }
+  } catch (err) {
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+  } finally {
+    this.disabled = false; this.textContent = 'Save List';
+  }
+});
+
 let allEntriesCache = [];
 document.querySelectorAll('.filterBtn').forEach(btn => {
   btn.addEventListener('click', function(){
@@ -3255,7 +3339,7 @@ async function loadSpecialActivities() {
     const today = new Date().toISOString().slice(0, 10);
     const APPLIES_TO_OPTIONS = [
       ['All', 'All entries'], ['Category A', 'Category A (any solo activity)'], ['Category B', 'Category B (any team sport)'],
-      ['Walking', 'Walking only'], ['Running', 'Running only'], ['Solo Cardio Workout', 'Solo Cardio Workout only'],
+      ['Walking', 'Walking only'], ['Running', 'Running only'], ['Workout', 'Workout only'],
       ['Basketball', 'Basketball only'], ['Volleyball', 'Volleyball only'], ['Badminton', 'Badminton only'],
       ['Pickleball', 'Pickleball only'], ['Football', 'Football only'],
     ];
@@ -3894,17 +3978,23 @@ function renderAdminLeaderboard(filter) {
   const list = document.getElementById('adminLeaderboardList');
   if (adminLeaderboardCache.length === 0) { list.innerHTML = '<p class="hint">No teams registered yet.</p>'; return; }
   const items = filter === 'all' ? adminLeaderboardCache : adminLeaderboardCache.slice(0, Number(filter));
+  const totalRankedTeams = adminLeaderboardCache.filter(t => t.rank !== null).length;
   list.innerHTML = items.map(t => {
     const hasLogo = t.logoStatus === 'Approved' && t.logoUrl;
     const avatar = hasLogo
       ? `<img src="${driveViewToThumbnail(t.logoUrl)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';">`
       : '';
+    const tier = getTeamTier(t.rank, totalRankedTeams);
     return `
       <div class="lb-row" ${t.rank === null ? 'style="opacity:.55;"' : ''}>
         <div class="lb-rank ${t.rank !== null && t.rank <= 3 ? 'top3' : ''}">${t.rank !== null ? t.rank : '—'}</div>
         ${avatar}
-        <div class="lb-name">${t.teamName}${t.rank === null ? ' <span style="font-size:10px;color:#a4292f;font-weight:700;">(not ranked — under 3 active members)</span>' : ''}</div>
-        <div class="lb-points">${t.points} pts</div>
+        <div style="flex:1;min-width:0;">
+          <div class="lb-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.teamName}</div>
+          ${t.rank === null ? '<span style="font-size:10px;color:#a4292f;font-weight:700;">(not ranked — under 3 active members)</span>' : ''}
+        </div>
+        <div class="lb-points" style="white-space:nowrap;flex-shrink:0;">${formatPts(t.points)} pts</div>
+        ${tier ? `<img src="${TIER_BADGE_ICONS[tier.cls]}" alt="${tier.name}" title="${tier.name}" style="height:30px;width:${TIER_ICON_WIDTHS[tier.cls]}px;flex-shrink:0;">` : ''}
       </div>
     `;
   }).join('');
