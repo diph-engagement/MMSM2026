@@ -749,7 +749,10 @@
         <div class="stat-row">
           <div class="stat"><div class="num" id="rEntryCount">0</div><div class="lbl">Entries</div></div>
           <div class="stat"><div class="num" id="rPending">0</div><div class="lbl">Pending</div></div>
-          <div class="stat"><div class="num" id="rStrikes" style="color:#a4292f;">0</div><div class="lbl">Strikes</div></div>
+          <div class="stat" id="rStrikesCard" onclick="showViolationsModal()" style="cursor:pointer;">
+            <div class="num" id="rStrikes" style="color:#a4292f;">0</div>
+            <div class="lbl">Strikes</div>
+          </div>
         </div>
         <div id="rMembers"></div>
         <p class="note" id="rNote"></p>
@@ -1225,6 +1228,47 @@ function showInfoModal(title, bodyHtml) {
   overlay.onclick = (e) => { if (e.target === overlay) close(); };
 }
 
+async function showViolationsModal() {
+  const code = window.__currentTeamCode;
+  if (!code) return;
+  showInfoModal('Violations & Strikes', '<p class="hint">Loading…</p>');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=team_violations&code=' + encodeURIComponent(code));
+    const data = await res.json();
+    if (!data.success) {
+      showInfoModal('Violations & Strikes', '<p class="hint">' + (data.error || 'Could not load violations.') + '</p>');
+      return;
+    }
+    if (data.violations.length === 0) {
+      showInfoModal('Violations & Strikes', '<p class="hint">No violations logged for your team. Keep it up!</p>');
+      return;
+    }
+    const rows = data.violations.map(v => {
+      const strikeColor = v.strikeNumber >= 3 ? '#a4292f' : v.strikeNumber === 2 ? '#c78a00' : '#666';
+      const voidedTag = v.voided ? '<span style="font-size:10px;color:#888;font-weight:700;margin-left:6px;">(Voided — no longer counts)</span>' : '';
+      const pointsLine = v.pointsImpact < 0
+        ? `<div style="color:#a4292f;font-weight:700;font-size:12px;margin-top:4px;">${v.pointsImpact} pts</div>` : '';
+      const statusLine = v.entryStatus
+        ? `<div style="font-size:11px;color:#999;margin-top:2px;">Status: ${v.entryStatus}</div>` : '';
+      return `
+        <div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+            <strong style="font-size:13px;">${v.memberName || v.memberStrava}</strong>
+            <span style="font-size:11px;color:${strikeColor};font-weight:800;white-space:nowrap;">Strike ${v.strikeNumber}</span>
+          </div>
+          <div style="font-size:11px;color:#999;margin-top:2px;">${new Date(v.timestamp).toLocaleDateString()}${voidedTag}</div>
+          <div style="font-size:12.5px;color:#444;margin-top:4px;">${v.reason}</div>
+          ${pointsLine}
+          ${statusLine}
+        </div>
+      `;
+    }).join('');
+    showInfoModal('Violations & Strikes', rows);
+  } catch (err) {
+    showInfoModal('Violations & Strikes', '<p class="hint">Could not reach the server.</p>');
+  }
+}
+
 // ============ ROUTER ============
 const VIEW_TITLES = {
   home: "Move More, Score More",
@@ -1349,7 +1393,7 @@ const RULEBOOK = [
     </ol>
     <p class="rb-note">Photos need a visible date matching the Strava entry's date. Undated or recycled photos earn zero points.</p>
     <p class="rb-sub">Daily Point Limit</p>
-    <p>No one can earn more than ${cfg.dailyPointCap} points in a single day, across every activity combined. This applies per activity type too — e.g. Walking can't exceed its own ${cfg.walkingCapPoints}-point daily ceiling even if split across multiple entries.</p>
+    <p>Entries that would push a day's total above ${cfg.dailyPointCap} points, across every activity combined, are held for a quick admin look before they count — it's a sanity check, not a hard ceiling. Per-activity-type caps work differently and ARE enforced automatically: e.g. Walking can't exceed its own ${cfg.walkingCapPoints}-point daily ceiling even if split across multiple entries.</p>
   `},
   { id: 'accountability', title: 'Staying Accountable', section: 'Section 7', html: (cfg) => `
     <p class="rb-sub">Minimum Activity Requirement</p>
