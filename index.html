@@ -224,6 +224,16 @@
     background:radial-gradient(circle at 25% -15%, #6a1fd0 0%, #3b0086 50%, #1b0030 100%);
     text-align:center; box-shadow:0 20px 50px rgba(20,0,40,.35); margin-bottom:14px;
   }
+  #rNoticesBell{
+    position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%;
+    border:none; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:2;
+  }
+  #rNoticesBell:active{ transform:scale(.92); }
+  #rNoticesBadge{
+    position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; padding:0 3px; border-radius:8px;
+    background:#ff6400; color:#fff; font-size:10px; font-weight:800; line-height:16px; text-align:center;
+  }
   .score-hero .hero-eyebrow{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.65); margin:0 0 6px; }
   .score-hero .team-title{ color:#fff; }
   .score-hero .team-sub{ color:rgba(255,255,255,.65); }
@@ -759,6 +769,10 @@
 
     <div id="lookupResult" style="display:none;">
       <div class="score-hero" style="margin-top:18px;">
+        <button type="button" id="rNoticesBell" onclick="showNoticesModal()" aria-label="View team notices">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span id="rNoticesBadge" style="display:none;">0</span>
+        </button>
         <p class="hero-eyebrow">Your Team Score</p>
         <div class="hero-profile-row">
           <div id="rLogoSection"></div>
@@ -780,7 +794,6 @@
       </div>
 
       <div class="card">
-        <div id="rNotices"></div>
         <div class="stat-row">
           <div class="stat"><div class="num" id="rEntryCount">0</div><div class="lbl">Entries</div></div>
           <div class="stat"><div class="num" id="rPending">0</div><div class="lbl">Pending</div></div>
@@ -1053,6 +1066,22 @@
         <button type="button" class="primary" id="workoutTypesSaveBtn">Save List</button>
         <div id="workoutTypesMsg" class="msg"></div>
       </div>
+
+      <button type="button" class="accordion-header" onclick="toggleAccordion('broadcast'); loadBroadcasts();">
+        <div>
+          <div class="accordion-title">Broadcast Notice</div>
+          <div class="accordion-desc">Post one message to every active team's Notices bell at once.</div>
+        </div>
+        <svg class="accordion-chevron" id="chevron-broadcast" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="card accordion-body" id="body-broadcast" style="display:none;">
+        <p class="hint" style="margin-top:0;">Sends to every currently active team as a separate notice each — editing or deleting it below updates all of their copies together.</p>
+        <label style="margin-top:0;">Message</label>
+        <textarea id="broadcastText" placeholder="e.g. a season-wide reminder, deadline, or announcement"></textarea>
+        <button type="button" class="primary" id="broadcastSendBtn">Send to All Teams</button>
+        <div id="broadcastMsg" class="msg"></div>
+        <div id="broadcastList" style="margin-top:14px;"></div>
+      </div>
     </div>
 
     <div id="adminTab-queue" class="subview">
@@ -1161,10 +1190,10 @@
 </div>
 
 <div id="infoModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,0,31,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border-radius:18px;padding:22px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);">
-    <h3 id="infoModalTitle" style="font-size:16px;margin:0 0 14px;color:var(--ink);"></h3>
-    <div id="infoModalBody" style="font-size:13px;color:#444;line-height:1.6;"></div>
-    <button type="button" id="infoModalCloseBtn" style="width:100%;margin-top:18px;padding:12px;border-radius:10px;border:none;background:var(--purple);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Close</button>
+  <div style="background:#fff;border-radius:18px;padding:22px;max-width:380px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.35);">
+    <h3 id="infoModalTitle" style="font-size:16px;margin:0 0 14px;color:var(--ink);flex-shrink:0;"></h3>
+    <div id="infoModalBody" style="font-size:13px;color:#444;line-height:1.6;overflow-y:auto;"></div>
+    <button type="button" id="infoModalCloseBtn" style="width:100%;margin-top:18px;padding:12px;border-radius:10px;border:none;background:var(--purple);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;flex-shrink:0;">Close</button>
   </div>
 </div>
 
@@ -1276,6 +1305,63 @@ function showInfoModal(title, bodyHtml) {
   function close() { overlay.style.display = 'none'; }
   document.getElementById('infoModalCloseBtn').onclick = close;
   overlay.onclick = (e) => { if (e.target === overlay) close(); };
+}
+
+function showNoticesModal() {
+  const notices = window.__currentNotices || [];
+  if (notices.length === 0) {
+    showInfoModal('Notices', '<p class="hint">Nothing here yet — you\'ll see updates, penalty confirmations, and other team notices as they come in.</p>');
+    return;
+  }
+  showInfoModal('Notices', renderNoticesList(notices));
+}
+
+function renderNoticesList(notices) {
+  return notices.map(n => `
+    <div class="notice-card" style="${n.read ? 'opacity:.55;' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div class="notice-date">${new Date(n.timestamp).toLocaleDateString()}</div>
+          ${n.text}
+        </div>
+        ${n.read
+          ? `<span title="Read" style="flex-shrink:0;color:#8a6d00;opacity:.7;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></span>`
+          : `<button type="button" onclick="markNoticeRead('${n.noticeId}', this)" title="Mark as read" style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:1.5px solid #c78a00;background:none;color:#c78a00;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            </button>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function markNoticeRead(noticeId, btnEl) {
+  const code = window.__currentTeamCode;
+  if (!code) return;
+  if (btnEl) btnEl.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'mark_notice_read', code, noticeId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const notice = (window.__currentNotices || []).find(n => n.noticeId === noticeId);
+      if (notice) notice.read = true;
+      const unreadCount = (window.__currentNotices || []).filter(n => !n.read).length;
+      const badge = document.getElementById('rNoticesBadge');
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+      document.getElementById('infoModalBody').innerHTML = renderNoticesList(window.__currentNotices);
+    } else if (btnEl) {
+      btnEl.disabled = false;
+    }
+  } catch (err) {
+    if (btnEl) btnEl.disabled = false;
+  }
 }
 
 async function showViolationsModal() {
@@ -2728,6 +2814,8 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
   const btn = this;
   msg.style.display = 'none'; result.style.display = 'none';
   document.getElementById('rTierCard').style.display = 'none';
+  document.getElementById('rNoticesBadge').style.display = 'none';
+  window.__currentNotices = [];
 
   if (!code) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Enter your Team Code first.'; return; }
   if (SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
@@ -2756,13 +2844,15 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     document.getElementById('rTierCard').style.display = heroTier ? 'block' : 'none';
     document.getElementById('rTierBadge').innerHTML = heroTier
       ? `<img src="${TIER_BADGE_IMAGES[heroTier.cls]}" alt="${heroTier.name}" style="max-width:320px;width:100%;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));">` : '';
-    const noticesHtml = (data.notices || []).map(n => `
-      <div class="notice-card">
-        <div class="notice-date">${new Date(n.timestamp).toLocaleDateString()}</div>
-        ${n.text}
-      </div>
-    `).join('');
-    document.getElementById('rNotices').innerHTML = noticesHtml;
+    window.__currentNotices = data.notices || [];
+    const badge = document.getElementById('rNoticesBadge');
+    const unreadCount = window.__currentNotices.filter(n => !n.read).length;
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+      badge.style.display = 'block';
+    } else {
+      badge.style.display = 'none';
+    }
     document.getElementById('rTotalPoints').textContent = formatPts(data.score.totalPoints);
     document.getElementById('rEntryCount').textContent = data.score.entryCount;
     document.getElementById('rPending').textContent = data.score.pendingReview;
@@ -4433,6 +4523,123 @@ async function postNotice(teamName, safeId, btnEl) {
   } catch (err) {
     alert('Could not reach the server.');
     btnEl.disabled = false; btnEl.textContent = 'Post Notice';
+  }
+}
+
+let allBroadcastsCache = [];
+
+async function loadBroadcasts() {
+  const list = document.getElementById('broadcastList');
+  const msg = document.getElementById('broadcastMsg');
+  msg.style.display = 'none';
+  list.innerHTML = '<p class="hint">Loading…</p>';
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=admin_broadcasts&adminKey=' + encodeURIComponent(adminKey));
+    const data = await res.json();
+    if (!data.success) { list.innerHTML = ''; msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; return; }
+    allBroadcastsCache = data.broadcasts;
+    renderBroadcastList();
+  } catch (err) {
+    list.innerHTML = '<p class="hint">Could not reach the server.</p>';
+  }
+}
+
+function renderBroadcastList() {
+  const list = document.getElementById('broadcastList');
+  if (allBroadcastsCache.length === 0) { list.innerHTML = '<p class="hint">No broadcasts sent yet.</p>'; return; }
+  list.innerHTML = allBroadcastsCache.map(b => `
+    <div class="entry-card">
+      <div class="meta">${new Date(b.timestamp).toLocaleString()} \u00b7 sent to ${b.teamCount} team${b.teamCount > 1 ? 's' : ''}</div>
+      <div style="font-size:13px;margin-top:4px;">${b.text}</div>
+      <div style="margin-top:8px;display:flex;gap:8px;">
+        <button type="button" class="icon-btn" title="Edit this broadcast" aria-label="Edit broadcast"
+          onclick="editBroadcast('${b.broadcastId}', this)" style="width:26px;height:26px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+        </button>
+        <button type="button" class="icon-btn" title="Delete this broadcast" aria-label="Delete broadcast"
+          onclick="deleteBroadcast('${b.broadcastId}', this)" style="width:26px;height:26px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('broadcastSendBtn').addEventListener('click', async function(){
+  const textEl = document.getElementById('broadcastText');
+  const text = textEl.value.trim();
+  const msg = document.getElementById('broadcastMsg');
+  msg.style.display = 'none';
+  if (!text) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Write a message first.'; return; }
+  if (!(await customConfirm('Send this message to every active team\u2019s Notices bell right now?'))) return;
+
+  this.disabled = true; this.textContent = 'Sending\u2026';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_broadcast_notice', adminKey, text }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Sent to ' + data.teamCount + ' team' + (data.teamCount > 1 ? 's' : '') + '.';
+      textEl.value = '';
+      loadBroadcasts();
+    } else {
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not send.';
+    }
+  } catch (err) {
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+  } finally {
+    this.disabled = false; this.textContent = 'Send to All Teams';
+  }
+});
+
+async function editBroadcast(broadcastId, btnEl) {
+  const current = (allBroadcastsCache.find(b => b.broadcastId === broadcastId) || {}).text || '';
+  const newText = prompt('Edit this broadcast (updates every team\u2019s copy):', current);
+  if (newText === null) return; // cancelled
+  if (!newText.trim()) { alert('Broadcast text can\u2019t be empty \u2014 use Delete instead if you want it gone.'); return; }
+
+  btnEl.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_edit_broadcast_notice', adminKey, broadcastId, text: newText.trim() }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadBroadcasts();
+    } else {
+      alert(data.error || 'Could not edit this broadcast.');
+      btnEl.disabled = false;
+    }
+  } catch (err) {
+    alert('Could not reach the server.');
+    btnEl.disabled = false;
+  }
+}
+
+async function deleteBroadcast(broadcastId, btnEl) {
+  const b = allBroadcastsCache.find(b => b.broadcastId === broadcastId);
+  const teamCount = b ? b.teamCount : 'all';
+  if (!(await customConfirm('Delete this broadcast? It will disappear from all ' + teamCount + ' teams\u2019 Notices bells immediately.'))) return;
+
+  btnEl.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_delete_broadcast_notice', adminKey, broadcastId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadBroadcasts();
+    } else {
+      alert(data.error || 'Could not delete this broadcast.');
+      btnEl.disabled = false;
+    }
+  } catch (err) {
+    alert('Could not reach the server.');
+    btnEl.disabled = false;
   }
 }
 
