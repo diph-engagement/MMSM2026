@@ -4106,7 +4106,18 @@ function getFilteredLeaderboardItems() {
   return filter === 'all' ? ranked : ranked.slice(0, Number(filter));
 }
 
-function buildLeaderboardCanvas(items, headerText) {
+function loadImagePromise(src, crossOrigin) {
+  return new Promise((resolve) => {
+    if (!src) { resolve(null); return; }
+    const img = new Image();
+    if (crossOrigin) img.crossOrigin = crossOrigin;
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+async function buildLeaderboardCanvas(items, headerText, includeLogos) {
   const canvas = document.getElementById('lbCanvas');
   const width = 720;
   const rowHeight = 58;
@@ -4117,6 +4128,15 @@ function buildLeaderboardCanvas(items, headerText) {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
+
+  // Preload everything first (tier icons are safe same-origin data URIs; logos are
+  // best-effort cross-origin fetches from Drive — either can fail without breaking the rest).
+  const preloaded = await Promise.all(items.map(async (t) => {
+    const tier = getTeamTier(t.rank, items.length);
+    const tierImg = tier ? await loadImagePromise(TIER_BADGE_ICONS[tier.cls], null) : null;
+    const logoImg = (includeLogos && t.logoUrl) ? await loadImagePromise(driveViewToThumbnail(t.logoUrl), 'anonymous') : null;
+    return { tier, tierImg, logoImg };
+  }));
 
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
@@ -4140,6 +4160,7 @@ function buildLeaderboardCanvas(items, headerText) {
 
   const badgeColors = { 1: '#FFD700', 2: '#C7CBD1', 3: '#CD7F32' };
   items.forEach((t, i) => {
+    const { tierImg, logoImg } = preloaded[i];
     const rowY = headerHeight + i * rowHeight;
     ctx.fillStyle = i % 2 === 0 ? '#F7F6FB' : '#ffffff';
     ctx.fillRect(0, rowY, width, rowHeight);
@@ -4154,15 +4175,38 @@ function buildLeaderboardCanvas(items, headerText) {
     ctx.textAlign = 'center';
     ctx.fillText(String(t.rank), 56, cy + 6);
 
+    let nameX = 96;
+    if (logoImg) {
+      const r = 18;
+      const cx = 100;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(logoImg, cx - r, cy - r, r * 2, r * 2);
+      ctx.restore();
+      nameX = 132;
+    }
+
+    // Tier icon anchors the right edge; points sit just to its left.
+    let tierDrawWidth = 0;
+    if (tierImg) {
+      const drawH = 34;
+      tierDrawWidth = tierImg.width * (drawH / tierImg.height);
+      ctx.drawImage(tierImg, width - 28 - tierDrawWidth, cy - drawH / 2, tierDrawWidth, drawH);
+    }
+
     ctx.fillStyle = '#181818';
     ctx.font = '700 19px "Plus Jakarta Sans", Arial, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(t.teamName, 96, cy + 7);
+    ctx.fillText(t.teamName, nameX, cy + 7);
 
     ctx.fillStyle = '#E84500';
     ctx.font = '800 19px "Plus Jakarta Sans", Arial, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(t.points + ' pts', width - 28, cy + 7);
+    const pointsX = tierImg ? width - 28 - tierDrawWidth - 14 : width - 28;
+    ctx.fillText(t.points + ' pts', pointsX, cy + 7);
   });
 
   ctx.fillStyle = '#f4f4f4';
@@ -4175,32 +4219,61 @@ function buildLeaderboardCanvas(items, headerText) {
   return canvas;
 }
 
-document.getElementById('lbDownloadImgBtn').addEventListener('click', function(){
+document.getElementById('lbDownloadImgBtn').addEventListener('click', async function(){
   const items = getFilteredLeaderboardItems();
   if (items.length === 0) { alert('Nothing to generate yet.'); return; }
   const header = document.getElementById('lbHeaderInput').value.trim() || 'Official Standings';
-  const canvas = buildLeaderboardCanvas(items, header);
-  const link = document.createElement('a');
-  link.download = 'MMSM_Leaderboard.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  this.disabled = true;
+  try {
+    let canvas = await buildLeaderboardCanvas(items, header, true);
+    let dataUrl;
+    try {
+      dataUrl = canvas.toDataURL('image/png');
+    } catch (taintedErr) {
+      // A logo image blocked export (cross-origin canvas tainting) — rebuild without logos.
+      canvas = await buildLeaderboardCanvas(items, header, false);
+      dataUrl = canvas.toDataURL('image/png');
+    }
+    const link = document.createElement('a');
+    link.download = 'MMSM_Leaderboard.png';
+    link.href = dataUrl;
+    link.click();
+  } finally {
+    this.disabled = false;
+  }
 });
 
-document.getElementById('lbCopyImgBtn').addEventListener('click', function(){
+document.getElementById('lbCopyImgBtn').addEventListener('click', async function(){
   const msg = document.getElementById('lbCopyMsg');
   msg.style.display = 'none';
   const items = getFilteredLeaderboardItems();
   if (items.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
   const header = document.getElementById('lbHeaderInput').value.trim() || 'Official Standings';
-  const canvas = buildLeaderboardCanvas(items, header);
-  canvas.toBlob(async (blob) => {
+  this.disabled = true;
+  try {
+    let canvas = await buildLeaderboardCanvas(items, header, true);
+    const tryClipboard = (c) => new Promise((resolve, reject) => {
+      c.toBlob(async (blob) => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          resolve();
+        } catch (err) { reject(err); }
+      }, 'image/png');
+    });
     try {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
-    } catch (err) {
-      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+      await tryClipboard(canvas);
+    } catch (taintedOrClipboardErr) {
+      // Either a tainted canvas (logo blocked export) or a clipboard permission issue.
+      // Retry once without logos in case it was the tainting, not the permission.
+      canvas = await buildLeaderboardCanvas(items, header, false);
+      await tryClipboard(canvas);
     }
-  }, 'image/png');
+    msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
+  } catch (err) {
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+  } finally {
+    this.disabled = false;
+  }
 });
 
 document.getElementById('lbCopyBtn').addEventListener('click', async function(){
@@ -4310,17 +4383,45 @@ function renderDirectory() {
   }).join('');
 }
 
-function buildDirectoryCanvas(items, headerText) {
+function truncateText(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let truncated = text;
+  while (truncated.length > 1 && ctx.measureText(truncated + '…').width > maxWidth) {
+    truncated = truncated.slice(0, -1);
+  }
+  return truncated + '…';
+}
+
+function getInitials(name) {
+  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '?';
+  if (words.length === 1) return words[0].charAt(0).toUpperCase();
+  return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+}
+
+async function buildDirectoryCanvas(items, headerText, includeLogos) {
   const canvas = document.getElementById('dirCanvas');
-  const width = 720;
-  const rowHeight = 58;
+  const width = 1400;
+  const cols = 4;
+  const outerPad = 24;
+  const gap = 16;
+  const cardWidth = (width - outerPad * 2 - gap * (cols - 1)) / cols;
+  const cardHeight = 178;
   const headerHeight = 140;
   const footerHeight = 50;
-  const padding = 20;
-  const height = headerHeight + items.length * rowHeight + footerHeight + padding;
+  const rows = Math.ceil(items.length / cols);
+  const height = headerHeight + rows * cardHeight + (rows - 1) * gap + footerHeight + outerPad * 2;
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
+
+  const brandColors = ['#5000B3', '#FF6400'];
+  const preloaded = await Promise.all(items.map(async (t, i) => {
+    const logoImg = (includeLogos && t.logoStatus === 'Approved' && t.logoUrl)
+      ? await loadImagePromise(driveViewToThumbnail(t.logoUrl), 'anonymous') : null;
+    const others = (t.members || []).filter(m => m !== t.teamLeaderName).slice(0, 4);
+    return { logoImg, others, avatarColor: brandColors[i % 2] };
+  }));
 
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
@@ -4343,58 +4444,124 @@ function buildDirectoryCanvas(items, headerText) {
   ctx.fillText('SEASON 2 — TEAM DIRECTORY', width / 2, 116);
 
   items.forEach((t, i) => {
-    const rowY = headerHeight + i * rowHeight;
-    ctx.fillStyle = i % 2 === 0 ? '#F7F6FB' : '#ffffff';
-    ctx.fillRect(0, rowY, width, rowHeight);
+    const { logoImg, others, avatarColor } = preloaded[i];
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cardX = outerPad + col * (cardWidth + gap);
+    const cardY = headerHeight + outerPad + row * (cardHeight + gap);
 
-    const cy = rowY + rowHeight / 2;
+    ctx.fillStyle = '#F7F6FB';
     ctx.beginPath();
-    ctx.arc(56, cy, 20, 0, Math.PI * 2);
-    ctx.fillStyle = '#5000B3';
+    ctx.roundRect(cardX, cardY, cardWidth, cardHeight, 12);
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '700 16px "Plus Jakarta Sans", Arial, sans-serif';
-    ctx.fillText((i + 1).toString(), 56, cy + 5);
 
+    const avatarR = 24;
+    const avatarCx = cardX + 20 + avatarR;
+    const avatarCy = cardY + 20 + avatarR;
+    if (logoImg) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarCx, avatarCy, avatarR, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(logoImg, avatarCx - avatarR, avatarCy - avatarR, avatarR * 2, avatarR * 2);
+      ctx.restore();
+    } else {
+      ctx.beginPath();
+      ctx.arc(avatarCx, avatarCy, avatarR, 0, Math.PI * 2);
+      ctx.fillStyle = avatarColor;
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 16px "Plus Jakarta Sans", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(getInitials(t.teamName), avatarCx, avatarCy + 6);
+    }
+
+    const textX = avatarCx + avatarR + 14;
+    const textMaxWidth = cardX + cardWidth - 16 - textX;
     ctx.textAlign = 'left';
     ctx.fillStyle = '#181818';
-    ctx.font = '700 18px "Plus Jakarta Sans", Arial, sans-serif';
-    ctx.fillText(t.teamName, 92, cy - 3);
+    ctx.font = '700 16px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText(truncateText(ctx, t.teamName, textMaxWidth), textX, avatarCy - 4);
     ctx.fillStyle = '#8c8c96';
-    ctx.font = '500 13px "Plus Jakarta Sans", Arial, sans-serif';
-    ctx.fillText('Led by ' + t.teamLeaderName + ' · ' + t.memberCount + ' members', 92, cy + 16);
-    ctx.textAlign = 'center';
+    ctx.font = '500 12px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText(truncateText(ctx, 'Leader: ' + (t.teamLeaderName || '—'), textMaxWidth), textX, avatarCy + 15);
+
+    const dividerY = cardY + 20 + avatarR * 2 + 16;
+    ctx.strokeStyle = '#E5E3F0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cardX + 16, dividerY);
+    ctx.lineTo(cardX + cardWidth - 16, dividerY);
+    ctx.stroke();
+
+    const memberColW = (cardWidth - 32) / 2;
+    ctx.fillStyle = '#3c3c3c';
+    ctx.font = '500 12px "Plus Jakarta Sans", Arial, sans-serif';
+    for (let m = 0; m < 4; m++) {
+      const mx = cardX + 16 + (m % 2) * memberColW;
+      const my = dividerY + 22 + Math.floor(m / 2) * 20;
+      const name = others[m] || '';
+      if (name) ctx.fillText(truncateText(ctx, name, memberColW - 8), mx, my);
+    }
   });
 
   ctx.fillStyle = '#8c8c96';
   ctx.font = '500 12px "Plus Jakarta Sans", Arial, sans-serif';
-  ctx.fillText('Move More, Score More — Season 2', width / 2, height - 20);
+  ctx.textAlign = 'center';
+  ctx.fillText('Move More, Score More — Season 2', width / 2, height - footerHeight / 2 + 4);
 
   return canvas;
 }
 
-document.getElementById('dirDownloadImgBtn').addEventListener('click', function(){
+document.getElementById('dirDownloadImgBtn').addEventListener('click', async function(){
   if (teamDirectoryCache.length === 0) { alert('Nothing to generate yet.'); return; }
-  const canvas = buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams');
-  const link = document.createElement('a');
-  link.download = 'MMSM_Team_Directory.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  this.disabled = true;
+  try {
+    let canvas = await buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams', true);
+    let dataUrl;
+    try {
+      dataUrl = canvas.toDataURL('image/png');
+    } catch (taintedErr) {
+      canvas = await buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams', false);
+      dataUrl = canvas.toDataURL('image/png');
+    }
+    const link = document.createElement('a');
+    link.download = 'MMSM_Team_Directory.png';
+    link.href = dataUrl;
+    link.click();
+  } finally {
+    this.disabled = false;
+  }
 });
 
-document.getElementById('dirCopyImgBtn').addEventListener('click', function(){
+document.getElementById('dirCopyImgBtn').addEventListener('click', async function(){
   const msg = document.getElementById('dirCopyMsg');
   msg.style.display = 'none';
   if (teamDirectoryCache.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
-  const canvas = buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams');
-  canvas.toBlob(async (blob) => {
+  this.disabled = true;
+  try {
+    let canvas = await buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams', true);
+    const tryClipboard = (c) => new Promise((resolve, reject) => {
+      c.toBlob(async (blob) => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          resolve();
+        } catch (err) { reject(err); }
+      }, 'image/png');
+    });
     try {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
-    } catch (err) {
-      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+      await tryClipboard(canvas);
+    } catch (taintedOrClipboardErr) {
+      canvas = await buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams', false);
+      await tryClipboard(canvas);
     }
-  }, 'image/png');
+    msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
+  } catch (err) {
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+  } finally {
+    this.disabled = false;
+  }
 });
 
 document.getElementById('dirCopyBtn').addEventListener('click', async function(){
