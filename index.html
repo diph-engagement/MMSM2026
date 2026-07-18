@@ -1356,10 +1356,12 @@ async function markNoticeRead(noticeId, btnEl) {
         badge.style.display = 'none';
       }
       document.getElementById('infoModalBody').innerHTML = renderNoticesList(window.__currentNotices);
-    } else if (btnEl) {
-      btnEl.disabled = false;
+    } else {
+      alert(data.error || 'Could not mark this as read.');
+      if (btnEl) btnEl.disabled = false;
     }
   } catch (err) {
+    alert('Could not reach the server.');
     if (btnEl) btnEl.disabled = false;
   }
 }
