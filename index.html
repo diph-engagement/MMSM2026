@@ -2853,7 +2853,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     document.getElementById('rRank').textContent = rankText;
     document.getElementById('rRank').style.color = data.rank ? '#fff' : 'rgba(255,255,255,.6)';
     document.getElementById('rRank').style.fontSize = data.rank ? '14px' : '12px';
-    const heroTier = getTeamTier(data.rank, data.totalTeams);
+    const heroTier = hasScore ? getTeamTier(data.rank, data.totalTeams) : null;
     document.getElementById('rTierCard').style.display = 'block';
     document.getElementById('rTierBadge').innerHTML = heroTier
       ? `<img src="${TIER_BADGE_IMAGES[heroTier.cls]}" alt="${heroTier.name}" style="max-width:320px;width:100%;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));">`
