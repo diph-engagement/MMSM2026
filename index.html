@@ -2843,15 +2843,21 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     document.getElementById('rTeamName').textContent = data.team.teamName;
     document.getElementById('rTeamLeader').textContent = 'Team Leader: ' + data.team.teamLeaderName;
     renderLogoSection(data.team.logoUrl, data.team.logoStatus, code);
-    document.getElementById('rRank').textContent = data.rank
-      ? ('Rank: ' + data.rank + ' of ' + data.totalTeams + ' teams')
-      : (data.eligible === false ? 'Not currently ranked — needs at least 3 active members for the official standings' : '');
+    const hasScore = data.score.totalPoints > 0;
+    let rankText = '';
+    if (data.rank && hasScore) {
+      rankText = 'Rank: ' + data.rank + ' of ' + data.totalTeams + ' teams';
+    } else if (data.eligible === false) {
+      rankText = 'Not currently ranked — needs at least 3 active members for the official standings';
+    } // else: eligible and ranked, but no score yet — leave blank rather than show "Rank: X of Y" at zero
+    document.getElementById('rRank').textContent = rankText;
     document.getElementById('rRank').style.color = data.rank ? '#fff' : 'rgba(255,255,255,.6)';
     document.getElementById('rRank').style.fontSize = data.rank ? '14px' : '12px';
     const heroTier = getTeamTier(data.rank, data.totalTeams);
-    document.getElementById('rTierCard').style.display = heroTier ? 'block' : 'none';
+    document.getElementById('rTierCard').style.display = 'block';
     document.getElementById('rTierBadge').innerHTML = heroTier
-      ? `<img src="${TIER_BADGE_IMAGES[heroTier.cls]}" alt="${heroTier.name}" style="max-width:320px;width:100%;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));">` : '';
+      ? `<img src="${TIER_BADGE_IMAGES[heroTier.cls]}" alt="${heroTier.name}" style="max-width:320px;width:100%;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28));">`
+      : `<span style="display:inline-block;padding:10px 20px;border-radius:12px;background:var(--grey-light);color:#8c8c96;font-size:13px;font-weight:600;">🔒 Unlock your tier badge after your first verified activity</span>`;
     window.__currentNotices = data.notices || [];
     const badge = document.getElementById('rNoticesBadge');
     const unreadCount = window.__currentNotices.filter(n => !n.read).length;
