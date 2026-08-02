@@ -398,6 +398,12 @@
   .switch.on::after{ left:23px; }
 
   .entry-card{ border:1.5px solid #eee; border-radius:12px; padding:14px; margin-bottom:12px; background:#fff; }
+  .sc-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .sc-table th{ background:var(--purple); color:#fff; padding:8px 6px; font-weight:700; text-align:center; white-space:nowrap; }
+  .sc-table th.sc-details-col, .sc-table td.sc-details-col{ text-align:left; }
+  .sc-table td{ padding:6px 4px; text-align:center; border-bottom:1px solid #eee; }
+  .sc-table tbody tr:nth-child(even) td{ background:var(--grey-light); }
+  .sc-week-cell{ display:inline-block; min-width:34px; font-weight:700; color:#fff; border-radius:6px; padding:4px 3px; font-size:10.5px; }
   .entry-card .top-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
   .entry-card .team{ font-weight:700; font-size:14px; }
   .entry-card .meta{ font-size:12px; color:#777; margin-top:2px; }
@@ -4460,20 +4466,27 @@ function renderSpecialChallengeGroupList() {
   const list = document.getElementById('specialChallengeGroupList');
   if (!scGroupsCache || scGroupsCache.length === 0) { list.innerHTML = '<p class="hint">No one enrolled yet.</p>'; return; }
 
-  list.innerHTML = scGroupsCache.map(g => {
+  const weekHeaders = Array.from({ length: 8 }, (_, i) => `<th>W${i + 1}</th>`).join('');
+  const rows = scGroupsCache.map(g => {
     const weekCells = g.weeks.map(w => {
       const style = SC_STATE_STYLE[w.state];
       const label = g.total === 0 ? '—' : `${w.met}/${w.total}`;
-      return `<div title="Week ${w.week}: ${style.label}" style="flex:1;text-align:center;padding:6px 2px;border-radius:6px;background:${style.bg};color:#fff;font-size:10px;font-weight:700;">W${w.week}<br>${label}</div>`;
+      return `<td title="Week ${w.week}: ${style.label}"><span class="sc-week-cell" style="background:${style.bg};">${label}</span></td>`;
     }).join('');
     return `
-      <div class="entry-card">
-        <strong style="font-size:14px;">${g.group}</strong>
-        <span style="font-size:11px;color:#999;"> — ${g.target}km/wk target · ${g.total} enrolled</span>
-        <div style="display:flex;gap:4px;margin-top:10px;">${weekCells}</div>
-      </div>
+      <tr>
+        <td class="sc-details-col"><strong>${g.group}</strong><br><span style="color:#999;font-size:10.5px;">${g.target}km/wk · ${g.total} enrolled</span></td>
+        ${weekCells}
+      </tr>
     `;
   }).join('');
+
+  list.innerHTML = `
+    <table class="sc-table">
+      <thead><tr><th class="sc-details-col">Group</th>${weekHeaders}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 function renderSpecialChallengeList() {
@@ -4481,29 +4494,38 @@ function renderSpecialChallengeList() {
   const items = scActiveGroupFilter === 'all' ? scParticipantsCache : scParticipantsCache.filter(p => p.group === scActiveGroupFilter);
   if (items.length === 0) { list.innerHTML = '<p class="hint">No one in this group yet.</p>'; return; }
 
-  list.innerHTML = items.map(p => {
+  const weekHeaders = Array.from({ length: 8 }, (_, i) => `<th>W${i + 1}</th>`).join('');
+  const rows = items.map(p => {
     const weekCells = p.weeks.map(w => {
       const style = SC_STATE_STYLE[w.state];
       const title = `Week ${w.week}: ${w.km}km of ${w.target}km — ${style.label}`;
-      return `<div title="${title}" style="flex:1;text-align:center;padding:6px 2px;border-radius:6px;background:${style.bg};color:#fff;font-size:10px;font-weight:700;">W${w.week}<br>${w.km}k</div>`;
+      return `<td title="${title}"><span class="sc-week-cell" style="background:${style.bg};">${w.km}k</span></td>`;
     }).join('');
     return `
-      <div class="entry-card">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
-          <div>
-            <strong style="font-size:14px;">${p.name}</strong>
-            <span style="font-size:11px;color:#999;"> — ${p.teamName} · ${p.group} (${p.target}km/wk)</span>
-          </div>
+      <tr>
+        <td class="sc-details-col">
+          <strong>${p.name}</strong><br>
+          <span style="color:#999;font-size:10.5px;">${p.teamName} · ${p.group} (${p.target}km/wk) · ${p.weeksMet}/8 met</span>
+        </td>
+        ${weekCells}
+        <td>
           <button type="button" class="icon-btn" title="Remove from Special Challenge" aria-label="Remove"
-            onclick="removeScParticipant('${p.strava.replace(/'/g, "\\'")}', this)" style="width:26px;height:26px;flex-shrink:0;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            onclick="removeScParticipant('${p.strava.replace(/'/g, "\\'")}', this)" style="width:24px;height:24px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
-        </div>
-        <div style="display:flex;gap:4px;margin-top:10px;">${weekCells}</div>
-        <div class="meta" style="margin-top:8px;">${p.weeksMet} of 8 weeks met so far${p.weeksMissed > 0 ? ' · ' + p.weeksMissed + ' missed' : ''}</div>
-      </div>
+        </td>
+      </tr>
     `;
   }).join('');
+
+  list.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table class="sc-table">
+        <thead><tr><th class="sc-details-col">Participant</th>${weekHeaders}<th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 document.querySelectorAll('.scGroupFilterBtn').forEach(btn => {
