@@ -885,7 +885,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
         <span id="directoryTabCount" class="tab-count-badge" style="display:none;"></span>
       </button>
-      <button type="button" class="adminTabBtn" data-tab="specialchallenge" title="Special Challenge">
+      <button type="button" class="adminTabBtn" data-tab="specialchallenge" title="Move More, Lead More">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4a1 1 0 011-1h13.7a.5.5 0 01.4.8L16 9l3.1 5.2a.5.5 0 01-.4.8H5"/></svg>
       </button>
     </div>
@@ -1190,7 +1190,7 @@
 
     <div id="adminTab-specialchallenge" class="subview">
       <div class="card">
-        <p class="hint" style="margin-top:0;">A separate solo-level side challenge — doesn't affect team points, the leaderboard, or tiers. Tracks each selected registrant's own Walking/Running distance against their group's weekly target, using the same entries they already log for the main game.</p>
+        <p class="hint" style="margin-top:0;"><strong>Move More, Lead More</strong> — a separate solo-level side challenge. Doesn't affect team points, the leaderboard, or tiers. Tracks each selected registrant's own Walking/Running distance against their group's weekly target, using the same entries they already log for the main game.</p>
         <label style="margin-top:0;">Add a Registrant</label>
         <select id="scRegistrantSelect"><option value="">Loading registrants…</option></select>
         <label>Group</label>
@@ -1199,7 +1199,7 @@
           <option value="Pacesetters">Pacesetters — 5 km/week</option>
           <option value="Striders">Striders — 5 km/week</option>
         </select>
-        <button type="button" class="primary" id="scAddBtn">Add to Special Challenge</button>
+        <button type="button" class="primary" id="scAddBtn">Add to Move More, Lead More</button>
         <div id="scAddMsg" class="msg"></div>
       </div>
 
@@ -4392,6 +4392,16 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
 let scRegistrantsCache = [];
 let scParticipantsCache = [];
 let scGroupsCache = [];
+let scWeeksCache = [];
+
+function formatWeekRange(startStr, endStr) {
+  const s = new Date(startStr + 'T00:00:00');
+  const e = new Date(endStr + 'T00:00:00');
+  const opts = { month: 'short', day: 'numeric' };
+  const sLabel = s.toLocaleDateString('en-US', opts);
+  if (s.getMonth() === e.getMonth()) return sLabel + '-' + e.getDate();
+  return sLabel + '-' + e.toLocaleDateString('en-US', opts);
+}
 
 async function loadRegistrantOptions() {
   const select = document.getElementById('scRegistrantSelect');
@@ -4423,7 +4433,7 @@ document.getElementById('scAddBtn').addEventListener('click', async function(){
     const data = await res.json();
     if (data.success) {
       msg.style.display = ''; msg.className = 'msg success';
-      msg.textContent = data.updated ? 'Updated — group changed.' : 'Added to the Special Challenge.';
+      msg.textContent = data.updated ? 'Updated — group changed.' : 'Added to Move More, Lead More.';
       document.getElementById('scRegistrantSelect').value = '';
       loadSpecialChallenge();
     } else {
@@ -4432,7 +4442,7 @@ document.getElementById('scAddBtn').addEventListener('click', async function(){
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
-    this.disabled = false; this.textContent = 'Add to Special Challenge';
+    this.disabled = false; this.textContent = 'Add to Move More, Lead More';
   }
 });
 
@@ -4446,6 +4456,7 @@ async function loadSpecialChallenge() {
     if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     scParticipantsCache = data.participants;
     scGroupsCache = data.groupStatus;
+    scWeeksCache = data.weeks;
     renderSpecialChallengeTable();
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
@@ -4471,7 +4482,7 @@ function renderSpecialChallengeTable() {
   const list = document.getElementById('specialChallengeList');
   if (!scGroupsCache || scGroupsCache.length === 0) { list.innerHTML = '<p class="hint">No one enrolled yet.</p>'; return; }
 
-  const weekHeaders = Array.from({ length: 8 }, (_, i) => `<th>W${i + 1}</th>`).join('');
+  const weekHeaders = scWeeksCache.map(w => `<th>W${w.week}<br><span style="font-weight:500;font-size:9px;opacity:.85;">${formatWeekRange(w.start, w.end)}</span></th>`).join('');
 
   const rows = scGroupsCache.map(g => {
     const isCollapsed = !!scCollapsedGroups[g.group];
@@ -4503,7 +4514,7 @@ function renderSpecialChallengeTable() {
           </td>
           ${weekCells}
           <td>
-            <button type="button" class="icon-btn" title="Remove from Special Challenge" aria-label="Remove"
+            <button type="button" class="icon-btn" title="Remove from Move More, Lead More" aria-label="Remove"
               onclick="event.stopPropagation();removeScParticipant('${p.strava.replace(/'/g, "\\'")}', this)" style="width:24px;height:24px;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
@@ -4531,12 +4542,13 @@ function buildSpecialChallengeCanvas() {
   const weekW = (width - detailsW - 40) / 8;
   const rowH = 40;
   const headerH = 130;
+  const colHeaderH = 40;
   const footerH = 46;
   const pad = 20;
 
   let rowCount = 0;
   scGroupsCache.forEach(g => { rowCount += 1 + scParticipantsCache.filter(p => p.group === g.group).length; });
-  const height = headerH + rowCount * rowH + footerH + pad * 2;
+  const height = headerH + colHeaderH + rowCount * rowH + footerH + pad * 2;
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
@@ -4551,13 +4563,32 @@ function buildSpecialChallengeCanvas() {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffffff';
   ctx.font = '800 26px "Plus Jakarta Sans", Arial, sans-serif';
-  ctx.fillText('🏃 Move More, Score More — Special Challenge', width / 2, 52);
+  ctx.fillText('🏃 Move More, Lead More', width / 2, 52);
   ctx.fillStyle = 'rgba(255,255,255,.7)';
   ctx.font = '600 13px "Plus Jakarta Sans", Arial, sans-serif';
   ctx.fillText('WEEK-BY-WEEK STANDING', width / 2, 80);
 
+  // Column header row — week numbers + date ranges. This was missing entirely before,
+  // which is why the exported image had no way to tell which column was which week.
+  ctx.fillStyle = '#3B0086';
+  ctx.fillRect(0, headerH, width, colHeaderH);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 12px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.fillText('Group / Participant', 16, headerH + 24);
+  scWeeksCache.forEach((w, wi) => {
+    const cx = detailsW + wi * weekW + weekW / 2;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 12px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText('W' + w.week, cx, headerH + 16);
+    ctx.font = '600 9px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.8)';
+    ctx.fillText(formatWeekRange(w.start, w.end), cx, headerH + 29);
+  });
+
   const stateColor = { met: '#1a7a3d', missed: '#a4292f', partial: '#c78a00', 'in-progress': '#c78a00', upcoming: '#ccc' };
-  let y = headerH + pad;
+  let y = headerH + colHeaderH + pad;
 
   scGroupsCache.forEach(g => {
     ctx.fillStyle = '#EEEDFE';
@@ -4638,7 +4669,7 @@ document.getElementById('scCopyImgBtn').addEventListener('click', async function
 });
 
 async function removeScParticipant(strava, btnEl) {
-  if (!(await customConfirm('Remove this person from the Special Challenge? Their week-by-week history will no longer be shown, though the underlying Walking/Running entries are untouched.'))) return;
+  if (!(await customConfirm('Remove this person from Move More, Lead More? Their week-by-week history will no longer be shown, though the underlying Walking/Running entries are untouched.'))) return;
   btnEl.disabled = true;
   try {
     const res = await fetch(SCRIPT_URL, {
