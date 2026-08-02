@@ -879,6 +879,9 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
         <span id="directoryTabCount" class="tab-count-badge" style="display:none;"></span>
       </button>
+      <button type="button" class="adminTabBtn" data-tab="specialchallenge" title="Special Challenge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4a1 1 0 011-1h13.7a.5.5 0 01.4.8L16 9l3.1 5.2a.5.5 0 01-.4.8H5"/></svg>
+      </button>
     </div>
 
     <div id="adminTab-controls" class="subview active">
@@ -1176,6 +1179,38 @@
       <div class="card" style="margin-top:12px;">
         <div id="directoryList"></div>
         <div id="directoryMsg" class="msg"></div>
+      </div>
+    </div>
+
+    <div id="adminTab-specialchallenge" class="subview">
+      <div class="card">
+        <p class="hint" style="margin-top:0;">A separate solo-level side challenge — doesn't affect team points, the leaderboard, or tiers. Tracks each selected registrant's own Walking/Running distance against their group's weekly target, using the same entries they already log for the main game.</p>
+        <label style="margin-top:0;">Add a Registrant</label>
+        <select id="scRegistrantSelect"><option value="">Loading registrants…</option></select>
+        <label>Group</label>
+        <select id="scGroupSelect">
+          <option value="Trailblazers">Trailblazers — 8 km/week</option>
+          <option value="Pacesetters">Pacesetters — 5 km/week</option>
+          <option value="Striders">Striders — 5 km/week</option>
+        </select>
+        <button type="button" class="primary" id="scAddBtn">Add to Special Challenge</button>
+        <div id="scAddMsg" class="msg"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="toggle-tabs" style="margin-bottom:14px;">
+          <button type="button" class="scGroupFilterBtn active" data-group="all">All</button>
+          <button type="button" class="scGroupFilterBtn" data-group="Trailblazers">Trailblazers</button>
+          <button type="button" class="scGroupFilterBtn" data-group="Pacesetters">Pacesetters</button>
+          <button type="button" class="scGroupFilterBtn" data-group="Striders">Striders</button>
+        </div>
+        <div id="specialChallengeList"></div>
+        <div id="specialChallengeMsg" class="msg"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <p class="hint" style="margin-top:0;">A team's week only counts as complete if <strong>every</strong> enrolled member from that team hit their own individual target that week — one miss fails the whole team for that week, even if everyone else on the team hit theirs.</p>
+        <div id="specialChallengeTeamList"></div>
       </div>
     </div>
   </div>
@@ -3187,6 +3222,8 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     loadViolations();
     loadSpecialActivities();
     loadDirectory();
+    loadRegistrantOptions();
+    loadSpecialChallenge();
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
@@ -4344,6 +4381,158 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not copy automatically — select the text manually.';
   }
 });
+
+let scRegistrantsCache = [];
+let scParticipantsCache = [];
+let scTeamsCache = [];
+let scActiveGroupFilter = 'all';
+
+async function loadRegistrantOptions() {
+  const select = document.getElementById('scRegistrantSelect');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=admin_registrants&adminKey=' + encodeURIComponent(adminKey));
+    const data = await res.json();
+    if (!data.success) { select.innerHTML = '<option value="">Could not load registrants</option>'; return; }
+    scRegistrantsCache = data.registrants;
+    select.innerHTML = '<option value="">Select a registrant…</option>' +
+      scRegistrantsCache.map(r => `<option value="${r.strava}">${r.name} — ${r.teamName}</option>`).join('');
+  } catch (err) {
+    select.innerHTML = '<option value="">Could not reach the server</option>';
+  }
+}
+
+document.getElementById('scAddBtn').addEventListener('click', async function(){
+  const strava = document.getElementById('scRegistrantSelect').value;
+  const group = document.getElementById('scGroupSelect').value;
+  const msg = document.getElementById('scAddMsg');
+  msg.style.display = 'none';
+  if (!strava) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Select a registrant first.'; return; }
+
+  this.disabled = true; this.textContent = 'Adding…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_add_special_challenge_participant', adminKey, strava, group }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.style.display = ''; msg.className = 'msg success';
+      msg.textContent = data.updated ? 'Updated — group changed.' : 'Added to the Special Challenge.';
+      document.getElementById('scRegistrantSelect').value = '';
+      loadSpecialChallenge();
+    } else {
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error || 'Could not add this registrant.';
+    }
+  } catch (err) {
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
+  } finally {
+    this.disabled = false; this.textContent = 'Add to Special Challenge';
+  }
+});
+
+async function loadSpecialChallenge() {
+  const list = document.getElementById('specialChallengeList');
+  const msg = document.getElementById('specialChallengeMsg');
+  list.innerHTML = '<p class="hint">Loading…</p>'; msg.style.display = 'none';
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=admin_special_challenge_status&adminKey=' + encodeURIComponent(adminKey));
+    const data = await res.json();
+    if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
+    scParticipantsCache = data.participants;
+    scTeamsCache = data.teams;
+    renderSpecialChallengeList();
+    renderSpecialChallengeTeamList();
+  } catch (err) {
+    msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
+  }
+}
+
+const SC_STATE_STYLE = {
+  met: { bg: '#1a7a3d', label: 'Met' },
+  missed: { bg: '#a4292f', label: 'Missed' },
+  'in-progress': { bg: '#c78a00', label: 'In progress' },
+  upcoming: { bg: '#ccc', label: 'Upcoming' },
+};
+
+function renderSpecialChallengeList() {
+  const list = document.getElementById('specialChallengeList');
+  const items = scActiveGroupFilter === 'all' ? scParticipantsCache : scParticipantsCache.filter(p => p.group === scActiveGroupFilter);
+  if (items.length === 0) { list.innerHTML = '<p class="hint">No one in this group yet.</p>'; return; }
+
+  list.innerHTML = items.map(p => {
+    const weekCells = p.weeks.map(w => {
+      const style = SC_STATE_STYLE[w.state];
+      const title = `Week ${w.week}: ${w.km}km of ${w.target}km — ${style.label}`;
+      return `<div title="${title}" style="flex:1;text-align:center;padding:6px 2px;border-radius:6px;background:${style.bg};color:#fff;font-size:10px;font-weight:700;">W${w.week}<br>${w.km}k</div>`;
+    }).join('');
+    return `
+      <div class="entry-card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+          <div>
+            <strong style="font-size:14px;">${p.name}</strong>
+            <span style="font-size:11px;color:#999;"> — ${p.teamName} · ${p.group} (${p.target}km/wk)</span>
+          </div>
+          <button type="button" class="icon-btn" title="Remove from Special Challenge" aria-label="Remove"
+            onclick="removeScParticipant('${p.strava.replace(/'/g, "\\'")}', this)" style="width:26px;height:26px;flex-shrink:0;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:10px;">${weekCells}</div>
+        <div class="meta" style="margin-top:8px;">${p.weeksMet} of 8 weeks met so far${p.weeksMissed > 0 ? ' · ' + p.weeksMissed + ' missed' : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSpecialChallengeTeamList() {
+  const list = document.getElementById('specialChallengeTeamList');
+  if (scTeamsCache.length === 0) { list.innerHTML = '<p class="hint">No teams with enrolled participants yet.</p>'; return; }
+
+  list.innerHTML = scTeamsCache.map(t => {
+    const weekCells = t.weeks.map(w => {
+      const style = SC_STATE_STYLE[w.state];
+      return `<div title="Week ${w.week}: ${style.label}" style="flex:1;text-align:center;padding:6px 2px;border-radius:6px;background:${style.bg};color:#fff;font-size:10px;font-weight:700;">W${w.week}</div>`;
+    }).join('');
+    return `
+      <div class="entry-card">
+        <strong style="font-size:14px;">${t.teamName}</strong>
+        <div class="meta">${t.memberNames.join(', ')}</div>
+        <div style="display:flex;gap:4px;margin-top:10px;">${weekCells}</div>
+        <div class="meta" style="margin-top:8px;">${t.weeksMet} of 8 weeks complete as a team${t.weeksMissed > 0 ? ' · ' + t.weeksMissed + ' missed' : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.querySelectorAll('.scGroupFilterBtn').forEach(btn => {
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.scGroupFilterBtn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    scActiveGroupFilter = this.dataset.group;
+    renderSpecialChallengeList();
+  });
+});
+
+async function removeScParticipant(strava, btnEl) {
+  if (!(await customConfirm('Remove this person from the Special Challenge? Their week-by-week history will no longer be shown, though the underlying Walking/Running entries are untouched.'))) return;
+  btnEl.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_remove_special_challenge_participant', adminKey, strava }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadSpecialChallenge();
+    } else {
+      alert(data.error || 'Could not remove this participant.');
+      btnEl.disabled = false;
+    }
+  } catch (err) {
+    alert('Could not reach the server.');
+    btnEl.disabled = false;
+  }
+}
 
 let teamDirectoryCache = [];
 
