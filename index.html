@@ -4505,7 +4505,7 @@ function renderSpecialChallengeList() {
       <tr>
         <td class="sc-details-col">
           <strong>${p.name}</strong><br>
-          <span style="color:#999;font-size:10.5px;">${p.teamName} · ${p.group} (${p.target}km/wk) · ${p.weeksMet}/8 met · ${p.totalEntriesFound} R/W ${p.totalEntriesFound === 1 ? 'entry' : 'entries'} found</span>
+          <span style="color:#999;font-size:10.5px;" title="${p.rawEntries || 'none'}">${p.teamName} · ${p.group} (${p.target}km/wk) · ${p.weeksMet}/8 met · ${p.totalEntriesFound} R/W ${p.totalEntriesFound === 1 ? 'entry' : 'entries'} found (hover for dates)</span>
         </td>
         ${weekCells}
         <td>
