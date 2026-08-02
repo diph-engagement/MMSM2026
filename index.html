@@ -2825,6 +2825,8 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
         confirmText = 'This was logged outside the review window for the activity date, so it\'s being held for a quick check before it counts toward your team\'s tally.';
       } else if (data.status === 'Logged — Attendance Only') {
         confirmText = 'This has been logged for attendance, but since your Team Leader hasn\'t confirmed active play yet, it doesn\'t earn points.';
+      } else if (data.status === 'Flagged — Duplicate Strava Link') {
+        confirmText = 'Submitted — but heads up: this Strava link matches one already used in another entry, so this one\'s been held for a quick admin check. If you pasted the wrong link by mistake, you can submit a correction with the right one.';
       } else if (data.specialTag) {
         confirmText = data.points + ' pts added to your team\'s tally — boosted by "' + data.specialTag + '"! ⭐';
       } else {
