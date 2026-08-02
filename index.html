@@ -1204,19 +1204,19 @@
       </div>
 
       <div class="card" style="margin-top:12px;">
-        <p class="hint" style="margin-top:0;">Overall — how many of each group hit their target that week, out of the group's total headcount.</p>
-        <div id="specialChallengeGroupList"></div>
-      </div>
-
-      <div class="card" style="margin-top:12px;">
-        <p class="hint" style="margin-top:0;">Individual standing, filterable by group.</p>
-        <div class="toggle-tabs" style="margin-bottom:14px;">
-          <button type="button" class="scGroupFilterBtn active" data-group="all">All</button>
-          <button type="button" class="scGroupFilterBtn" data-group="Trailblazers">Trailblazers</button>
-          <button type="button" class="scGroupFilterBtn" data-group="Pacesetters">Pacesetters</button>
-          <button type="button" class="scGroupFilterBtn" data-group="Striders">Striders</button>
+        <p class="hint" style="margin-top:0;">Each group's row shows how many of its enrolled participants hit target that week; the rows underneath show each person's own numbers.</p>
+        <div class="team-action-row" style="margin-top:0;flex-wrap:wrap;">
+          <button type="button" class="primary" id="scCopyImgBtn" style="flex:2;width:auto;margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            Copy Image
+          </button>
+          <button type="button" class="icon-action-btn info" id="scDownloadImgBtn" title="Download Image" aria-label="Download Image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          </button>
         </div>
-        <div id="specialChallengeList"></div>
+        <div id="scCopyMsg" class="msg"></div>
+        <canvas id="scCanvas" style="display:none;"></canvas>
+        <div id="specialChallengeList" style="margin-top:14px;"></div>
         <div id="specialChallengeMsg" class="msg"></div>
       </div>
     </div>
@@ -4392,7 +4392,6 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
 let scRegistrantsCache = [];
 let scParticipantsCache = [];
 let scGroupsCache = [];
-let scActiveGroupFilter = 'all';
 
 async function loadRegistrantOptions() {
   const select = document.getElementById('scRegistrantSelect');
@@ -4447,8 +4446,7 @@ async function loadSpecialChallenge() {
     if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     scParticipantsCache = data.participants;
     scGroupsCache = data.groupStatus;
-    renderSpecialChallengeList();
-    renderSpecialChallengeGroupList();
+    renderSpecialChallengeTable();
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
@@ -4462,79 +4460,181 @@ const SC_STATE_STYLE = {
   upcoming: { bg: '#ccc', label: 'Upcoming' },
 };
 
-function renderSpecialChallengeGroupList() {
-  const list = document.getElementById('specialChallengeGroupList');
+let scCollapsedGroups = {};
+
+function toggleScGroupCollapse(group) {
+  scCollapsedGroups[group] = !scCollapsedGroups[group];
+  renderSpecialChallengeTable();
+}
+
+function renderSpecialChallengeTable() {
+  const list = document.getElementById('specialChallengeList');
   if (!scGroupsCache || scGroupsCache.length === 0) { list.innerHTML = '<p class="hint">No one enrolled yet.</p>'; return; }
 
   const weekHeaders = Array.from({ length: 8 }, (_, i) => `<th>W${i + 1}</th>`).join('');
+
   const rows = scGroupsCache.map(g => {
-    const weekCells = g.weeks.map(w => {
+    const isCollapsed = !!scCollapsedGroups[g.group];
+    const groupWeekCells = g.weeks.map(w => {
       const style = SC_STATE_STYLE[w.state];
       const label = g.total === 0 ? '—' : `${w.met}/${w.total}`;
       return `<td title="Week ${w.week}: ${style.label}"><span class="sc-week-cell" style="background:${style.bg};">${label}</span></td>`;
     }).join('');
-    return `
-      <tr>
-        <td class="sc-details-col"><strong>${g.group}</strong><br><span style="color:#999;font-size:10.5px;">${g.target}km/wk · ${g.total} enrolled</span></td>
-        ${weekCells}
+    const chevron = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5000B3" stroke-width="2.5" style="vertical-align:-2px;margin-right:6px;transform:rotate(${isCollapsed ? '-90deg' : '0deg'});transition:transform .15s;"><path d="M6 9l6 6 6-6"/></svg>`;
+    const groupRow = `
+      <tr style="background:#EEEDFE;cursor:pointer;" onclick="toggleScGroupCollapse('${g.group}')">
+        <td class="sc-details-col">${chevron}<strong>${g.group}</strong><br><span style="color:#5000B3;font-size:10.5px;font-weight:600;margin-left:20px;">${g.target}km/wk · ${g.total} enrolled</span></td>
+        ${groupWeekCells}
+        <td></td>
       </tr>
     `;
-  }).join('');
-
-  list.innerHTML = `
-    <table class="sc-table">
-      <thead><tr><th class="sc-details-col">Group</th>${weekHeaders}</tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-}
-
-function renderSpecialChallengeList() {
-  const list = document.getElementById('specialChallengeList');
-  const items = scActiveGroupFilter === 'all' ? scParticipantsCache : scParticipantsCache.filter(p => p.group === scActiveGroupFilter);
-  if (items.length === 0) { list.innerHTML = '<p class="hint">No one in this group yet.</p>'; return; }
-
-  const weekHeaders = Array.from({ length: 8 }, (_, i) => `<th>W${i + 1}</th>`).join('');
-  const rows = items.map(p => {
-    const weekCells = p.weeks.map(w => {
-      const style = SC_STATE_STYLE[w.state];
-      const title = `Week ${w.week}: ${w.km}km of ${w.target}km — ${style.label}`;
-      return `<td title="${title}"><span class="sc-week-cell" style="background:${style.bg};">${w.km}k</span></td>`;
+    if (isCollapsed) return groupRow;
+    const memberRows = scParticipantsCache.filter(p => p.group === g.group).map(p => {
+      const weekCells = p.weeks.map(w => {
+        const style = SC_STATE_STYLE[w.state];
+        const title = `Week ${w.week}: ${w.km}km of ${w.target}km — ${style.label}`;
+        return `<td title="${title}"><span class="sc-week-cell" style="background:${style.bg};">${w.km}k</span></td>`;
+      }).join('');
+      return `
+        <tr>
+          <td class="sc-details-col" style="padding-left:22px;">
+            ${p.name}<br>
+            <span style="color:#999;font-size:10.5px;" title="${p.rawEntries || 'none'}">${p.teamName} · ${p.weeksMet}/8 met · ${p.totalEntriesFound} R/W ${p.totalEntriesFound === 1 ? 'entry' : 'entries'} found (hover for dates)</span>
+          </td>
+          ${weekCells}
+          <td>
+            <button type="button" class="icon-btn" title="Remove from Special Challenge" aria-label="Remove"
+              onclick="event.stopPropagation();removeScParticipant('${p.strava.replace(/'/g, "\\'")}', this)" style="width:24px;height:24px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </td>
+        </tr>
+      `;
     }).join('');
-    return `
-      <tr>
-        <td class="sc-details-col">
-          <strong>${p.name}</strong><br>
-          <span style="color:#999;font-size:10.5px;" title="${p.rawEntries || 'none'}">${p.teamName} · ${p.group} (${p.target}km/wk) · ${p.weeksMet}/8 met · ${p.totalEntriesFound} R/W ${p.totalEntriesFound === 1 ? 'entry' : 'entries'} found (hover for dates)</span>
-        </td>
-        ${weekCells}
-        <td>
-          <button type="button" class="icon-btn" title="Remove from Special Challenge" aria-label="Remove"
-            onclick="removeScParticipant('${p.strava.replace(/'/g, "\\'")}', this)" style="width:24px;height:24px;">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-        </td>
-      </tr>
-    `;
+    return groupRow + memberRows;
   }).join('');
 
   list.innerHTML = `
     <div style="overflow-x:auto;">
       <table class="sc-table">
-        <thead><tr><th class="sc-details-col">Participant</th>${weekHeaders}<th></th></tr></thead>
+        <thead><tr><th class="sc-details-col">Group / Participant</th>${weekHeaders}<th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
   `;
 }
 
-document.querySelectorAll('.scGroupFilterBtn').forEach(btn => {
-  btn.addEventListener('click', function(){
-    document.querySelectorAll('.scGroupFilterBtn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    scActiveGroupFilter = this.dataset.group;
-    renderSpecialChallengeList();
+function buildSpecialChallengeCanvas() {
+  const canvas = document.getElementById('scCanvas');
+  const width = 1240;
+  const detailsW = 280;
+  const weekW = (width - detailsW - 40) / 8;
+  const rowH = 40;
+  const headerH = 130;
+  const footerH = 46;
+  const pad = 20;
+
+  let rowCount = 0;
+  scGroupsCache.forEach(g => { rowCount += 1 + scParticipantsCache.filter(p => p.group === g.group).length; });
+  const height = headerH + rowCount * rowH + footerH + pad * 2;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  const grad = ctx.createLinearGradient(0, 0, width, 0);
+  grad.addColorStop(0, '#5a1bb8');
+  grad.addColorStop(1, '#3B0086');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, headerH);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 26px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.fillText('🏃 Move More, Score More — Special Challenge', width / 2, 52);
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  ctx.font = '600 13px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.fillText('WEEK-BY-WEEK STANDING', width / 2, 80);
+
+  const stateColor = { met: '#1a7a3d', missed: '#a4292f', partial: '#c78a00', 'in-progress': '#c78a00', upcoming: '#ccc' };
+  let y = headerH + pad;
+
+  scGroupsCache.forEach(g => {
+    ctx.fillStyle = '#EEEDFE';
+    ctx.fillRect(0, y, width, rowH);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#3B0086';
+    ctx.font = '800 14px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText(g.group, 16, y + 18);
+    ctx.font = '600 10.5px "Plus Jakarta Sans", Arial, sans-serif';
+    ctx.fillText(g.target + 'km/wk · ' + g.total + ' enrolled', 16, y + 32);
+    g.weeks.forEach((w, wi) => {
+      const cx = detailsW + wi * weekW + weekW / 2;
+      const label = g.total === 0 ? '—' : w.met + '/' + w.total;
+      ctx.fillStyle = stateColor[w.state];
+      ctx.beginPath(); ctx.roundRect(detailsW + wi * weekW + 4, y + 8, weekW - 8, 24, 5); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.font = '700 11px "Plus Jakarta Sans", Arial, sans-serif';
+      ctx.fillText(label, cx, y + 24);
+    });
+    y += rowH;
+
+    scParticipantsCache.filter(p => p.group === g.group).forEach((p, pi) => {
+      ctx.fillStyle = pi % 2 === 0 ? '#F7F6FB' : '#ffffff';
+      ctx.fillRect(0, y, width, rowH);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#181818';
+      ctx.font = '700 13px "Plus Jakarta Sans", Arial, sans-serif';
+      ctx.fillText(p.name, 36, y + 17);
+      ctx.fillStyle = '#999999';
+      ctx.font = '500 10px "Plus Jakarta Sans", Arial, sans-serif';
+      ctx.fillText(p.teamName + ' · ' + p.weeksMet + '/8 met', 36, y + 31);
+      p.weeks.forEach((w, wi) => {
+        const cx = detailsW + wi * weekW + weekW / 2;
+        ctx.fillStyle = stateColor[w.state];
+        ctx.beginPath(); ctx.roundRect(detailsW + wi * weekW + 4, y + 8, weekW - 8, 24, 5); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.font = '700 11px "Plus Jakarta Sans", Arial, sans-serif';
+        ctx.fillText(w.km + 'k', cx, y + 24);
+      });
+      y += rowH;
+    });
   });
+
+  ctx.fillStyle = '#f4f4f4';
+  ctx.fillRect(0, height - footerH, width, footerH);
+  ctx.fillStyle = '#999999';
+  ctx.font = '600 12px "Plus Jakarta Sans", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Detector Inspector · ' + new Date().toLocaleDateString(), width / 2, height - footerH / 2 + 4);
+
+  return canvas;
+}
+
+document.getElementById('scDownloadImgBtn').addEventListener('click', function(){
+  if (!scGroupsCache || scGroupsCache.length === 0) { alert('Nothing to generate yet.'); return; }
+  const canvas = buildSpecialChallengeCanvas();
+  const link = document.createElement('a');
+  link.download = 'MMSM_Special_Challenge.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+
+document.getElementById('scCopyImgBtn').addEventListener('click', async function(){
+  const msg = document.getElementById('scCopyMsg');
+  msg.style.display = 'none';
+  if (!scGroupsCache || scGroupsCache.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
+  const canvas = buildSpecialChallengeCanvas();
+  canvas.toBlob(async (blob) => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      msg.style.display = ''; msg.className = 'msg success'; msg.textContent = 'Image copied! Paste it directly into the DI Page or Teams chat.';
+    } catch (err) {
+      msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Your browser blocked copying an image — use "Download Image" instead.';
+    }
+  }, 'image/png');
 });
 
 async function removeScParticipant(strava, btnEl) {
