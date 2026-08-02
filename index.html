@@ -1198,6 +1198,12 @@
       </div>
 
       <div class="card" style="margin-top:12px;">
+        <p class="hint" style="margin-top:0;">Overall — how many of each group hit their target that week, out of the group's total headcount.</p>
+        <div id="specialChallengeGroupList"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <p class="hint" style="margin-top:0;">Individual standing, filterable by group.</p>
         <div class="toggle-tabs" style="margin-bottom:14px;">
           <button type="button" class="scGroupFilterBtn active" data-group="all">All</button>
           <button type="button" class="scGroupFilterBtn" data-group="Trailblazers">Trailblazers</button>
@@ -1206,11 +1212,6 @@
         </div>
         <div id="specialChallengeList"></div>
         <div id="specialChallengeMsg" class="msg"></div>
-      </div>
-
-      <div class="card" style="margin-top:12px;">
-        <p class="hint" style="margin-top:0;">A team's week only counts as complete if <strong>every</strong> enrolled member from that team hit their own individual target that week — one miss fails the whole team for that week, even if everyone else on the team hit theirs.</p>
-        <div id="specialChallengeTeamList"></div>
       </div>
     </div>
   </div>
@@ -4384,7 +4385,7 @@ document.getElementById('lbCopyBtn').addEventListener('click', async function(){
 
 let scRegistrantsCache = [];
 let scParticipantsCache = [];
-let scTeamsCache = [];
+let scGroupsCache = [];
 let scActiveGroupFilter = 'all';
 
 async function loadRegistrantOptions() {
@@ -4439,9 +4440,9 @@ async function loadSpecialChallenge() {
     const data = await res.json();
     if (!data.success) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = data.error; list.innerHTML = ''; return; }
     scParticipantsCache = data.participants;
-    scTeamsCache = data.teams;
+    scGroupsCache = data.groupStatus;
     renderSpecialChallengeList();
-    renderSpecialChallengeTeamList();
+    renderSpecialChallengeGroupList();
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.'; list.innerHTML = '';
   }
@@ -4450,9 +4451,30 @@ async function loadSpecialChallenge() {
 const SC_STATE_STYLE = {
   met: { bg: '#1a7a3d', label: 'Met' },
   missed: { bg: '#a4292f', label: 'Missed' },
+  partial: { bg: '#c78a00', label: 'Partial — week ended' },
   'in-progress': { bg: '#c78a00', label: 'In progress' },
   upcoming: { bg: '#ccc', label: 'Upcoming' },
 };
+
+function renderSpecialChallengeGroupList() {
+  const list = document.getElementById('specialChallengeGroupList');
+  if (!scGroupsCache || scGroupsCache.length === 0) { list.innerHTML = '<p class="hint">No one enrolled yet.</p>'; return; }
+
+  list.innerHTML = scGroupsCache.map(g => {
+    const weekCells = g.weeks.map(w => {
+      const style = SC_STATE_STYLE[w.state];
+      const label = g.total === 0 ? '—' : `${w.met}/${w.total}`;
+      return `<div title="Week ${w.week}: ${style.label}" style="flex:1;text-align:center;padding:6px 2px;border-radius:6px;background:${style.bg};color:#fff;font-size:10px;font-weight:700;">W${w.week}<br>${label}</div>`;
+    }).join('');
+    return `
+      <div class="entry-card">
+        <strong style="font-size:14px;">${g.group}</strong>
+        <span style="font-size:11px;color:#999;"> — ${g.target}km/wk target · ${g.total} enrolled</span>
+        <div style="display:flex;gap:4px;margin-top:10px;">${weekCells}</div>
+      </div>
+    `;
+  }).join('');
+}
 
 function renderSpecialChallengeList() {
   const list = document.getElementById('specialChallengeList');
@@ -4479,26 +4501,6 @@ function renderSpecialChallengeList() {
         </div>
         <div style="display:flex;gap:4px;margin-top:10px;">${weekCells}</div>
         <div class="meta" style="margin-top:8px;">${p.weeksMet} of 8 weeks met so far${p.weeksMissed > 0 ? ' · ' + p.weeksMissed + ' missed' : ''}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderSpecialChallengeTeamList() {
-  const list = document.getElementById('specialChallengeTeamList');
-  if (scTeamsCache.length === 0) { list.innerHTML = '<p class="hint">No teams with enrolled participants yet.</p>'; return; }
-
-  list.innerHTML = scTeamsCache.map(t => {
-    const weekCells = t.weeks.map(w => {
-      const style = SC_STATE_STYLE[w.state];
-      return `<div title="Week ${w.week}: ${style.label}" style="flex:1;text-align:center;padding:6px 2px;border-radius:6px;background:${style.bg};color:#fff;font-size:10px;font-weight:700;">W${w.week}</div>`;
-    }).join('');
-    return `
-      <div class="entry-card">
-        <strong style="font-size:14px;">${t.teamName}</strong>
-        <div class="meta">${t.memberNames.join(', ')}</div>
-        <div style="display:flex;gap:4px;margin-top:10px;">${weekCells}</div>
-        <div class="meta" style="margin-top:8px;">${t.weeksMet} of 8 weeks complete as a team${t.weeksMissed > 0 ? ' · ' + t.weeksMissed + ' missed' : ''}</div>
       </div>
     `;
   }).join('');
