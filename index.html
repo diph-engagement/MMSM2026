@@ -685,6 +685,7 @@
         <div id="sectionA" class="subview active">
           <label>Activity Type</label>
           <select id="activityType">
+            <option value="" disabled selected>Select activity type…</option>
             <option>Walking</option>
             <option>Running</option>
             <option>Workout</option>
@@ -750,10 +751,10 @@
       </form>
 
       <div id="entryConfirmView" style="display:none;text-align:center;padding:12px 0;">
-        <div style="width:64px;height:64px;border-radius:50%;background:#e3f8e9;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a7a3d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <div id="entryConfirmIconCircle" style="width:64px;height:64px;border-radius:50%;background:#e3f8e9;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+          <svg id="entryConfirmIcon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a7a3d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
-        <h2 style="font-size:19px;margin:0 0 6px;color:var(--ink);">Entry Logged!</h2>
+        <h2 id="entryConfirmHeading" style="font-size:19px;margin:0 0 6px;color:var(--ink);">Entry Logged!</h2>
         <p id="entryConfirmText" style="font-size:14px;color:#555;line-height:1.5;max-width:320px;margin:0 auto 20px;"></p>
         <button type="button" class="primary" id="entryLogAnotherBtn">Log Another Entry</button>
       </div>
@@ -2871,12 +2872,23 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
     const data = await res.json();
     if (data.success) {
       let confirmText;
+      const iconCircle = document.getElementById('entryConfirmIconCircle');
+      const icon = document.getElementById('entryConfirmIcon');
+      const heading = document.getElementById('entryConfirmHeading');
+      iconCircle.style.background = '#e3f8e9';
+      icon.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
+      icon.setAttribute('stroke', '#1a7a3d');
+      heading.textContent = 'Entry Logged!';
       if (String(data.status).indexOf('Late Submission') !== -1) {
         confirmText = 'This was logged outside the review window for the activity date, so it\'s being held for a quick check before it counts toward your team\'s tally.';
       } else if (data.status === 'Logged — Attendance Only') {
         confirmText = 'This has been logged for attendance, but since your Team Leader hasn\'t confirmed active play yet, it doesn\'t earn points.';
       } else if (data.status === 'Flagged — Duplicate Strava Link') {
-        confirmText = 'Submitted — but heads up: this Strava link matches one already used in another entry, so this one\'s been held for a quick admin check. If you pasted the wrong link by mistake, you can submit a correction with the right one.';
+        confirmText = '⚠️ This entry has been flagged as a duplicate — the Strava link matches one already submitted. Your points are on hold and won\'t count until this is reviewed. If you pasted the wrong link by mistake, submit a correction with the right one.';
+        iconCircle.style.background = '#fdeaea';
+        icon.innerHTML = '<path d="M12 3L2 20h20z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".5" fill="currentColor"/>';
+        icon.setAttribute('stroke', '#a4292f');
+        heading.textContent = 'Entry Flagged';
       } else if (data.specialTag) {
         confirmText = data.points + ' pts added to your team\'s tally — boosted by "' + data.specialTag + '"! ⭐';
       } else {
@@ -3280,15 +3292,21 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     // once (especially if a participant is submitting an entry at the same moment) was a
     // real, recurring contributor to "could not reach the server" on this page specifically.
     // Trades some total load time for reliability: never more than one request in flight.
-    await loadQueue('needs-review');
-    await loadTeams();
-    await loadAdminLeaderboard();
-    await loadIndividualLeaderboard();
-    await loadViolations();
-    await loadSpecialActivities();
-    await loadDirectory();
-    await loadRegistrantOptions();
-    await loadSpecialChallenge();
+    //
+    // Each call is also capped with a timeout — since they're sequential, a single request
+    // that hangs (rather than cleanly failing) would otherwise block every call after it,
+    // including the hideLoading() below, leaving the spinner stuck forever even though
+    // earlier tabs already loaded and rendered behind it.
+    const withTimeout = (promise, ms) => Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
+    await withTimeout(loadQueue('needs-review'), 15000);
+    await withTimeout(loadTeams(), 15000);
+    await withTimeout(loadAdminLeaderboard(), 15000);
+    await withTimeout(loadIndividualLeaderboard(), 15000);
+    await withTimeout(loadViolations(), 15000);
+    await withTimeout(loadSpecialActivities(), 15000);
+    await withTimeout(loadDirectory(), 15000);
+    await withTimeout(loadRegistrantOptions(), 15000);
+    await withTimeout(loadSpecialChallenge(), 15000);
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
