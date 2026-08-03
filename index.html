@@ -4991,10 +4991,21 @@ async function buildDirectoryCanvas(items, headerText, includeLogos) {
   return canvas;
 }
 
+async function fetchAndMergeLogoDataUris() {
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=admin_team_logos&adminKey=' + encodeURIComponent(adminKey));
+    const data = await res.json();
+    if (data.success) {
+      teamDirectoryCache.forEach(t => { t.logoDataUri = data.logos[t.teamName] || ''; });
+    }
+  } catch (err) { /* export still works without logos — buildDirectoryCanvas falls back gracefully */ }
+}
+
 document.getElementById('dirDownloadImgBtn').addEventListener('click', async function(){
   if (teamDirectoryCache.length === 0) { alert('Nothing to generate yet.'); return; }
   this.disabled = true;
   try {
+    await fetchAndMergeLogoDataUris();
     let canvas = await buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams', true);
     let dataUrl;
     try {
@@ -5018,6 +5029,7 @@ document.getElementById('dirCopyImgBtn').addEventListener('click', async functio
   if (teamDirectoryCache.length === 0) { msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Nothing to copy yet.'; return; }
   this.disabled = true;
   try {
+    await fetchAndMergeLogoDataUris();
     let canvas = await buildDirectoryCanvas(teamDirectoryCache, 'Meet the Teams', true);
     const tryClipboard = (c) => new Promise((resolve, reject) => {
       c.toBlob(async (blob) => {
