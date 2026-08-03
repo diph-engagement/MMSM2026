@@ -3277,15 +3277,20 @@ document.getElementById('adminUnlockBtn').addEventListener('click', async functi
     if (data.settings.registrationClosingDate) {
       document.getElementById('regCloseInput').value = toLocalDatetimeInputValue(data.settings.registrationClosingDate);
     }
-    loadQueue('needs-review');
-    loadTeams();
-    loadAdminLeaderboard();
-    loadIndividualLeaderboard();
-    loadViolations();
-    loadSpecialActivities();
-    loadDirectory();
-    loadRegistrantOptions();
-    loadSpecialChallenge();
+    // Sequenced deliberately, not fired all at once — Google Apps Script limits how many
+    // executions of the same script can run simultaneously, and 9 requests bursting at
+    // once (especially if a participant is submitting an entry at the same moment) was a
+    // real, recurring contributor to "could not reach the server" on this page specifically.
+    // Trades some total load time for reliability: never more than one request in flight.
+    await loadQueue('needs-review');
+    await loadTeams();
+    await loadAdminLeaderboard();
+    await loadIndividualLeaderboard();
+    await loadViolations();
+    await loadSpecialActivities();
+    await loadDirectory();
+    await loadRegistrantOptions();
+    await loadSpecialChallenge();
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Could not reach the server.';
   } finally {
