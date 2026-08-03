@@ -4144,24 +4144,24 @@ async function loadTeams() {
           `).join('')}
         </div>
         <div class="team-action-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
-          <button class="icon-action-btn ${t.status === 'Active' ? 'decline' : 'approve'}" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;"
+          <button class="icon-action-btn ${t.status === 'Active' ? 'decline' : 'approve'}" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;border-radius:10px;"
             title="${t.status === 'Active' ? 'Disqualify Team' : 'Reactivate Team'}" aria-label="${t.status === 'Active' ? 'Disqualify Team' : 'Reactivate Team'}"
             onclick="toggleTeamStatus('${teamNameEsc}', '${t.status === 'Active' ? 'Disqualified' : 'Active'}', this)">
             ${t.status === 'Active'
               ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M8 8l8 8"/></svg>Disqualify'
               : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Reactivate'}
           </button>
-          <button type="button" class="icon-action-btn warning" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;" title="Log Violation" aria-label="Log Violation" onclick="toggleViolationPanel('${safeId}')">
+          <button type="button" class="icon-action-btn warning" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;border-radius:10px;" title="Log Violation" aria-label="Log Violation" onclick="toggleViolationPanel('${safeId}')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L2 20h20z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>Violation
           </button>
-          <button type="button" class="icon-action-btn neutral" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;" ${subsLeft <= 0 ? 'disabled' : ''}
+          <button type="button" class="icon-action-btn neutral" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;border-radius:10px;" ${subsLeft <= 0 ? 'disabled' : ''}
             title="${subsLeft <= 0 ? 'Substitution Already Used' : 'Replace Member'}" aria-label="Replace Member" onclick="toggleReplacePanel('${safeId}')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>Replace
           </button>
-          <button type="button" class="icon-action-btn neutral" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;" title="Reassign Team Leader" aria-label="Reassign Team Leader" onclick="toggleTlPanel('${safeId}')">
+          <button type="button" class="icon-action-btn neutral" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;border-radius:10px;" title="Reassign Team Leader" aria-label="Reassign Team Leader" onclick="toggleTlPanel('${safeId}')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l2.4 7.2H22l-6 4.4 2.3 7.2-6.3-4.5-6.3 4.5 2.3-7.2-6-4.4h7.6z"/></svg>Reassign
           </button>
-          <button type="button" class="icon-action-btn info" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;" title="Post Notice to Team" aria-label="Post Notice to Team" onclick="toggleNoticePanel('${safeId}')">
+          <button type="button" class="icon-action-btn info" style="width:auto;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:8px 4px;border-radius:10px;" title="Post Notice to Team" aria-label="Post Notice to Team" onclick="toggleNoticePanel('${safeId}')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 11l18-7-7 18-2-8-9-3z"/></svg>Notice
           </button>
         </div>
