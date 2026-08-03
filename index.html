@@ -41,8 +41,6 @@
 
   @media (min-width:900px){
     .app.admin-wide #adminGate{ max-width:420px; margin:0 auto; }
-    .app.admin-wide #queueList{ display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
-    .app.admin-wide #queueList .entry-card{ margin-bottom:0; }
     .app.admin-wide #teamsList{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:12px; align-items:start; }
     .app.admin-wide #teamsList .team-card{ margin-bottom:0; }
     .app.admin-wide #adminLeaderboardList{ max-width:520px; margin:0 auto; }
@@ -3820,6 +3818,18 @@ function renderQueue(filter) {
   if (filter === 'needs-review') {
     items = items.filter(e => String(e.status).indexOf('Pending') === 0 || String(e.status).indexOf('Flagged') === 0);
     items.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // oldest first — needs attention soonest
+  } else {
+    // "All Entries" mixes actionable and already-resolved items. Actionable ones sort
+    // oldest-first (same reasoning as Needs Review — longest-waiting surfaces first);
+    // resolved ones (Auto-Logged, Approved, Declined, Rejected — anything not needing a
+    // decision) sort newest-first instead, since recent activity is what's actually useful
+    // to glance at once something's already settled.
+    const isActionable = e => String(e.status).indexOf('Pending') === 0 || String(e.status).indexOf('Flagged') === 0;
+    items.sort((a, b) => {
+      const aAct = isActionable(a), bAct = isActionable(b);
+      if (aAct !== bAct) return aAct ? -1 : 1;
+      return aAct ? new Date(a.timestamp) - new Date(b.timestamp) : new Date(b.timestamp) - new Date(a.timestamp);
+    });
   }
   const searchTerm = (document.getElementById('queueSearchInput')?.value || '').trim().toLowerCase();
   if (searchTerm) {
@@ -3914,21 +3924,23 @@ function renderQueue(filter) {
   }).join('');
 
   list.innerHTML = `
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;">
-        <thead>
-          <tr style="background:var(--purple);color:#fff;font-size:11px;">
-            <th style="padding:6px 4px;"></th>
-            <th style="padding:6px 8px;text-align:left;">Team / Participant</th>
-            <th style="padding:6px 8px;text-align:left;">Activity</th>
-            <th style="padding:6px 8px;text-align:right;">Points</th>
-            <th style="padding:6px 8px;text-align:center;">Status</th>
-            <th style="padding:6px 8px;text-align:center;">Age</th>
-            <th style="padding:6px 8px;text-align:center;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--purple);color:#fff;font-size:11px;">
+              <th style="padding:6px 4px;"></th>
+              <th style="padding:6px 8px;text-align:left;">Team / Participant</th>
+              <th style="padding:6px 8px;text-align:left;">Activity</th>
+              <th style="padding:6px 8px;text-align:right;">Points</th>
+              <th style="padding:6px 8px;text-align:center;">Status</th>
+              <th style="padding:6px 8px;text-align:center;">Age</th>
+              <th style="padding:6px 8px;text-align:center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
     </div>
   `;
   if (capped) {
