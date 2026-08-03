@@ -3981,6 +3981,9 @@ async function loadTeams() {
             title="${subsLeft <= 0 ? 'Substitution Already Used' : 'Replace Member'}" aria-label="Replace Member" onclick="toggleReplacePanel('${safeId}')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
           </button>
+          <button type="button" class="icon-action-btn neutral" title="Reassign Team Leader" aria-label="Reassign Team Leader" onclick="toggleTlPanel('${safeId}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l2.4 7.2H22l-6 4.4 2.3 7.2-6.3-4.5-6.3 4.5 2.3-7.2-6-4.4h7.6z"/></svg>
+          </button>
           <button type="button" class="icon-action-btn info" title="Post Notice to Team" aria-label="Post Notice to Team" onclick="toggleNoticePanel('${safeId}')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 11l18-7-7 18-2-8-9-3z"/></svg>
           </button>
@@ -4011,6 +4014,18 @@ async function loadTeams() {
           <input type="url" id="replaceNewProfile-${safeId}" placeholder="strava.com/athletes/... or a strava.app.link share link">
           <p class="hint" style="margin-top:6px;">The outgoing member's points already earned stay on the team's total. This can only be done once per team all season.</p>
           <button type="button" class="primary" style="margin-top:6px;" onclick="replaceMember('${teamNameEsc}','${safeId}',this)">Confirm Replacement</button>
+        </div>
+
+        <div id="tlPanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
+          <label style="margin-top:0;">New Team Leader (from current roster)</label>
+          <select id="tlNewLeader-${safeId}">
+            <option value="" disabled selected>Select a member…</option>
+            ${activeMembers.map(m => `<option value="${m.strava}">${m.name} (${m.strava})</option>`).join('')}
+          </select>
+          <label>New Team Leader's Contact Email</label>
+          <input type="email" id="tlNewLeaderEmail-${safeId}">
+          <p class="hint" style="margin-top:6px;">Doesn't touch the roster or use up the team's substitution — just updates who's recorded as Team Leader.</p>
+          <button type="button" class="primary" style="margin-top:6px;" onclick="reassignTeamLeader('${teamNameEsc}','${safeId}',this)">Confirm New Team Leader</button>
         </div>
 
         <div id="noticePanel-${safeId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
@@ -5070,6 +5085,41 @@ async function toggleSeparated(teamName, memberStrava, separated, btnEl) {
 function toggleReplacePanel(safeId) {
   const panel = document.getElementById('replacePanel-' + safeId);
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleTlPanel(safeId) {
+  const panel = document.getElementById('tlPanel-' + safeId);
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function reassignTeamLeader(teamName, safeId, btnEl) {
+  const select = document.getElementById('tlNewLeader-' + safeId);
+  const newLeaderStrava = select.value;
+  const newLeaderEmail = document.getElementById('tlNewLeaderEmail-' + safeId).value.trim();
+
+  if (!newLeaderStrava) { alert('Select the new Team Leader first.'); return; }
+  if (!newLeaderEmail) { alert('Enter a contact email for the new Team Leader.'); return; }
+  const newLeaderLabel = select.selectedOptions[0].textContent;
+  if (!(await customConfirm('Make ' + newLeaderLabel + ' the new Team Leader for this team?'))) return;
+
+  btnEl.disabled = true; btnEl.textContent = 'Updating…';
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'admin_reassign_team_leader', adminKey, teamName, newLeaderStrava, newLeaderEmail }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Team Leader updated.');
+      loadTeams();
+    } else {
+      alert(data.error || 'Could not update the Team Leader.');
+      btnEl.disabled = false; btnEl.textContent = 'Confirm New Team Leader';
+    }
+  } catch (err) {
+    alert('Could not reach the server.');
+    btnEl.disabled = false; btnEl.textContent = 'Confirm New Team Leader';
+  }
 }
 
 async function replaceMember(teamName, safeId, btnEl) {
