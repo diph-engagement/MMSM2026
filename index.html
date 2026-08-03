@@ -2792,6 +2792,16 @@ async function refreshSpecialActivityCard() {
   }
 }
 
+let currentEntryIdempotencyKey = null;
+function getOrCreateIdempotencyKey() {
+  if (!currentEntryIdempotencyKey) {
+    currentEntryIdempotencyKey = (window.crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : (Date.now() + '-' + Math.random().toString(36).slice(2));
+  }
+  return currentEntryIdempotencyKey;
+}
+
 document.getElementById('entryForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const msg = document.getElementById('entryMsg');
@@ -2804,7 +2814,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
     msg.style.display = ''; msg.className = 'msg error'; msg.textContent = 'Find your team and select your name first.'; return;
   }
 
-  let payload = { action: 'entry', teamName, stravaName, category: entryCategory };
+  let payload = { action: 'entry', teamName, stravaName, category: entryCategory, idempotencyKey: getOrCreateIdempotencyKey() };
   const selectedTagId = document.getElementById('specialActivitySelect').value;
   if (selectedTagId) payload.specialActivityTagId = selectedTagId;
   if (entryCategory === 'A') {
@@ -2883,6 +2893,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
       document.getElementById('entryForm').reset();
       document.querySelectorAll('#entryForm .file-upload-box input[type="file"]').forEach(updateFileUploadBox);
       refreshSpecialActivityCard();
+      currentEntryIdempotencyKey = null; // this attempt succeeded — the next submission is a genuinely new entry
     } else {
       msg.style.display = ''; msg.className = 'msg error';
       msg.textContent = data.error || 'Something went wrong — please try again.';
