@@ -404,6 +404,7 @@
   .sc-table td{ padding:6px 4px; text-align:center; border-bottom:1px solid #eee; }
   .sc-table tbody tr:nth-child(even) td{ background:var(--grey-light); }
   .sc-week-cell{ display:inline-block; min-width:34px; font-weight:700; color:#fff; border-radius:6px; padding:4px 3px; font-size:10.5px; }
+  .sc-week-cell-group{ background:#fff !important; border:2px solid; padding:2px 3px; }
   .entry-card .top-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
   .entry-card .team{ font-weight:700; font-size:14px; }
   .entry-card .meta{ font-size:12px; color:#777; margin-top:2px; }
@@ -4549,7 +4550,9 @@ function renderSpecialChallengeTable() {
     const groupWeekCells = g.weeks.map(w => {
       const style = SC_STATE_STYLE[w.state];
       const label = g.total === 0 ? '—' : `${w.met}/${w.total}`;
-      return `<td title="Week ${w.week}: ${style.label}"><span class="sc-week-cell" style="background:${style.bg};">${label}</span></td>`;
+      // Group cells are outlined chips (colored border, light fill) rather than solid-filled,
+      // so a group's summary row reads as visually distinct from the individual rows under it.
+      return `<td title="Week ${w.week}: ${style.label}"><span class="sc-week-cell sc-week-cell-group" style="border-color:${style.bg};color:${style.bg};">${label}</span></td>`;
     }).join('');
     const chevron = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5000B3" stroke-width="2.5" style="vertical-align:-2px;margin-right:6px;transform:rotate(${isCollapsed ? '-90deg' : '0deg'});transition:transform .15s;"><path d="M6 9l6 6 6-6"/></svg>`;
     const groupRow = `
@@ -4562,9 +4565,14 @@ function renderSpecialChallengeTable() {
     if (isCollapsed) return groupRow;
     const memberRows = scParticipantsCache.filter(p => p.group === g.group).map(p => {
       const weekCells = p.weeks.map(w => {
-        const style = SC_STATE_STYLE[w.state];
-        const title = `Week ${w.week}: ${w.km}km of ${w.target}km — ${style.label}`;
-        return `<td title="${title}"><span class="sc-week-cell" style="background:${style.bg};">${w.km}k</span></td>`;
+        // No entry at all yet (0km) reads as neutral grey + a dash, distinct from "made some
+        // progress but not there yet" (amber) — a missed week stays red regardless of km,
+        // since that's a settled negative outcome, not an in-progress/empty state.
+        const noEntry = w.km === 0 && w.state !== 'missed';
+        const bg = noEntry ? '#ccc' : SC_STATE_STYLE[w.state].bg;
+        const label = noEntry ? '—' : w.km + 'k';
+        const title = `Week ${w.week}: ${w.km}km of ${w.target}km — ${noEntry ? 'No entry yet' : SC_STATE_STYLE[w.state].label}`;
+        return `<td title="${title}"><span class="sc-week-cell" style="background:${bg};">${label}</span></td>`;
       }).join('');
       return `
         <tr>
@@ -4662,9 +4670,15 @@ function buildSpecialChallengeCanvas() {
     g.weeks.forEach((w, wi) => {
       const cx = detailsW + wi * weekW + weekW / 2;
       const label = g.total === 0 ? '—' : w.met + '/' + w.total;
-      ctx.fillStyle = stateColor[w.state];
-      ctx.beginPath(); ctx.roundRect(detailsW + wi * weekW + 4, y + 8, weekW - 8, 24, 5); ctx.fill();
+      const color = stateColor[w.state];
+      // Outlined chip (light fill, colored border+text) instead of solid-filled, so the
+      // group's summary row reads as visually distinct from the individual rows under it.
       ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.roundRect(detailsW + wi * weekW + 4, y + 8, weekW - 8, 24, 5); ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = color;
+      ctx.beginPath(); ctx.roundRect(detailsW + wi * weekW + 5, y + 9, weekW - 10, 22, 5); ctx.stroke();
+      ctx.fillStyle = color;
       ctx.textAlign = 'center';
       ctx.font = '700 11px "Plus Jakarta Sans", Arial, sans-serif';
       ctx.fillText(label, cx, y + 24);
@@ -4683,12 +4697,13 @@ function buildSpecialChallengeCanvas() {
       ctx.fillText(p.teamName + ' · ' + p.weeksMet + '/8 met', 36, y + 31);
       p.weeks.forEach((w, wi) => {
         const cx = detailsW + wi * weekW + weekW / 2;
-        ctx.fillStyle = stateColor[w.state];
+        const noEntry = w.km === 0 && w.state !== 'missed';
+        ctx.fillStyle = noEntry ? '#ccc' : stateColor[w.state];
         ctx.beginPath(); ctx.roundRect(detailsW + wi * weekW + 4, y + 8, weekW - 8, 24, 5); ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.font = '700 11px "Plus Jakarta Sans", Arial, sans-serif';
-        ctx.fillText(w.km + 'k', cx, y + 24);
+        ctx.fillText(noEntry ? '—' : w.km + 'k', cx, y + 24);
       });
       y += rowH;
     });
