@@ -2985,7 +2985,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     document.getElementById('assistantFab').style.display = 'block';
     const perMember = data.score.perMember || {};
     document.getElementById('rMembers').innerHTML = data.team.members.map(m => {
-      const pts = perMember[m.strava] || 0;
+      const pts = perMember[m.strava.trim().toLowerCase()] || 0;
       const safeId = m.strava.replace(/[^a-zA-Z0-9]/g, '');
       return `
         <button type="button" class="member-row-btn" onclick="toggleMemberEntries('${safeId}', '${m.strava.replace(/'/g, "\\'")}')">
@@ -4413,7 +4413,7 @@ function renderIndividualLeaderboard(individuals) {
   const half = Math.ceil(individuals.length / 2);
   const left = individuals.slice(0, half);
   const right = individuals.slice(half);
-  list.innerHTML = `<div>${left.map(renderRow).join('')}</div><div>${right.map(renderRow).join('')}</div>`;
+  list.innerHTML = `<div style="min-width:0;">${left.map(renderRow).join('')}</div><div style="min-width:0;">${right.map(renderRow).join('')}</div>`;
 }
 
 function renderAdminLeaderboard(filter) {
