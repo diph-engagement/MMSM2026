@@ -2891,6 +2891,12 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
         heading.textContent = 'Entry Flagged';
       } else if (data.specialTag) {
         confirmText = data.points + ' pts added to your team\'s tally — boosted by "' + data.specialTag + '"! ⭐';
+      } else if (String(data.status).indexOf('Rejected') === 0) {
+        confirmText = (data.notes || 'This didn\'t count toward your team\'s tally.');
+        iconCircle.style.background = '#fdeaea';
+        icon.innerHTML = '<path d="M12 3L2 20h20z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".5" fill="currentColor"/>';
+        icon.setAttribute('stroke', '#a4292f');
+        heading.textContent = 'Not Counted';
       } else {
         confirmText = data.points ? (data.points + ' pts added to your team\'s tally.') : 'This has been recorded.';
       }
@@ -2984,7 +2990,7 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
     window.__currentTeamData = data;
     document.getElementById('assistantFab').style.display = 'block';
     const perMember = data.score.perMember || {};
-    document.getElementById('rMembers').innerHTML = data.team.members.map(m => {
+    let membersHtml = data.team.members.map(m => {
       const pts = perMember[m.strava.trim().toLowerCase()] || 0;
       const safeId = m.strava.replace(/[^a-zA-Z0-9]/g, '');
       return `
@@ -2995,6 +3001,18 @@ document.getElementById('lookupBtn').addEventListener('click', async function(){
         <div id="memberEntries-${safeId}" class="member-entries-panel" style="display:none;"></div>
       `;
     }).join('');
+    if (data.team.replacedMember) {
+      const rm = data.team.replacedMember;
+      const safeId = rm.strava.replace(/[^a-zA-Z0-9]/g, '') + '-replaced';
+      membersHtml += `
+        <button type="button" class="member-row-btn" style="opacity:.55;" onclick="toggleMemberEntries('${safeId}', '${rm.strava.replace(/'/g, "\\'")}')">
+          <span>${rm.name} <span style="color:#999;">(${rm.strava})</span> <span style="font-size:11px;color:#999;">(Replaced)</span></span>
+          <span style="font-weight:700;color:#999;">${rm.points} pts ▾</span>
+        </button>
+        <div id="memberEntries-${safeId}" class="member-entries-panel" style="display:none;"></div>
+      `;
+    }
+    document.getElementById('rMembers').innerHTML = membersHtml;
     result.style.display = 'block';
   } catch (err) {
     msg.style.display = ''; msg.className = 'msg error';
